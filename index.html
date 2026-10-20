@@ -1,18 +1,17 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Kevin Creator OS</title>
+<title>KevinMiora</title>
 <link rel="preconnect" href="https://tjvcqdfglgfpwsokybje.supabase.co" crossorigin>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Creator OS">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-title" content="KevinMiora">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#12161b">
 <style>
 :root{--bg:#fff;--grp:#f2f2f7;--cell:#fff;--tx:#000;--mute:#8e8e93;--sep:#d1d1d6;--tint:#25d366;--tintd:#128c7e;--red:#ff3b30;--bar:rgba(249,249,249,.94);--inp:#f2f2f7}
-@media(prefers-color-scheme:dark){:root{--bg:#000;--grp:#000;--cell:#1c1c1e;--tx:#fff;--sep:#38383a;--bar:rgba(18,18,18,.94);--inp:#1c1c1e;--tintd:#25d366}}
+@media all{:root{--bg:#000;--grp:#000;--cell:#1c1c1e;--tx:#fff;--sep:#38383a;--bar:rgba(18,18,18,.94);--inp:#1c1c1e;--tintd:#25d366}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--tx);font:17px -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
 html.g{background:var(--grp)}body{background:transparent}
@@ -46,7 +45,7 @@ header.n .t{text-align:center;font-weight:600;font-size:17px;white-space:nowrap;
 .glass{background:linear-gradient(180deg,rgba(255,255,255,.42),rgba(255,255,255,.12));border:1px solid rgba(255,255,255,.62);-webkit-backdrop-filter:blur(20px) saturate(200%) brightness(1.04);backdrop-filter:blur(20px) saturate(200%) brightness(1.04);box-shadow:0 12px 32px rgba(0,0,0,.22),inset 0 1.5px 1px rgba(255,255,255,.8),inset 0 -1px 2px rgba(255,255,255,.3)}
 html.wpc .glass{background-color:rgba(var(--wp),.14);border-color:rgba(var(--wp),.55)}
 #bg.img{animation:none;inset:0;opacity:1!important}#bg.img::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.55)}
-@media(prefers-color-scheme:dark){.glass{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.05)),rgba(28,28,30,.26);border-color:rgba(255,255,255,.3);box-shadow:0 12px 32px rgba(0,0,0,.55),inset 0 1.5px 1px rgba(255,255,255,.4),inset 0 -1px 2px rgba(255,255,255,.1)}
+@media all{.glass{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.05)),rgba(28,28,30,.26);border-color:rgba(255,255,255,.3);box-shadow:0 12px 32px rgba(0,0,0,.55),inset 0 1.5px 1px rgba(255,255,255,.4),inset 0 -1px 2px rgba(255,255,255,.1)}
 .tabs button.on,.tabs .orb.on{color:#fff}#bg.img::after{background:rgba(0,0,0,.5)}#bg{opacity:.65}.sk{background-image:linear-gradient(90deg,var(--cell),rgba(255,255,255,.07),var(--cell))}}
 
 :root{--ease:cubic-bezier(.32,.72,0,1);--spring:cubic-bezier(.34,1.5,.64,1)}
@@ -75,7 +74,7 @@ button.busy::after{inset:0;margin:auto}.btn.busy::after{border-color:rgba(255,25
 .lg .f{border-radius:12px;margin-bottom:10px;text-align:left}.lg .btn{width:100%;margin:6px 0}.lg .link{margin-top:10px;font-size:16px}
 /* ===== v13: tab bar ramping, kaca ala iOS, script terstruktur ===== */
 :root{--gl:rgba(255,255,255,.58);--gb:rgba(255,255,255,.7);--gsh:0 6px 24px rgba(0,0,0,.07);--act:rgba(120,120,128,.14);--wl:38%}
-@media(prefers-color-scheme:dark){:root{--gl:rgba(34,34,36,.5);--gb:rgba(255,255,255,.1);--gsh:0 8px 28px rgba(0,0,0,.3);--wl:70%}}
+@media all{:root{--gl:rgba(34,34,36,.5);--gb:rgba(255,255,255,.1);--gsh:0 8px 28px rgba(0,0,0,.3);--wl:70%}}
 #app{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
 .nopad{padding-bottom:calc(24px + env(safe-area-inset-bottom))!important}
 
@@ -87,10 +86,10 @@ button.busy::after{inset:0;margin:auto}.btn.busy::after{border-color:rgba(255,25
 .lg .f{background:var(--gl);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border:.5px solid var(--gb);border-radius:14px}
 .grp .sub{font-size:14px}
 header.n{background:rgba(249,249,249,.72);-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%)}
-@media(prefers-color-scheme:dark){header.n{background:rgba(18,18,18,.6)}}
+@media all{header.n{background:rgba(18,18,18,.6)}}
 
 /* badge status */
-.pill{font-size:11.5px;font-weight:500;color:var(--tintd);background:rgba(37,211,102,.14);background:color-mix(in srgb,var(--tint) 16%,transparent);padding:3px 10px;border-radius:999px;align-self:center;margin-top:0;white-space:nowrap}
+.pill{font-size:11.5px;font-weight:500;color:var(--tintd);background:rgba(200,176,122,.14);background:color-mix(in srgb,var(--tint) 16%,transparent);padding:3px 10px;border-radius:999px;align-self:center;margin-top:0;white-space:nowrap}
 
 /* tab bar */
 .tabs{position:fixed;z-index:10;left:22px;right:22px;bottom:calc(12px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:8px;transition:transform .6s var(--ease),opacity .3s}
@@ -108,7 +107,7 @@ header.n{background:rgba(249,249,249,.72);-webkit-backdrop-filter:blur(22px) sat
 .lens{position:absolute;left:-1px;top:-3px;bottom:-3px;width:calc((100% - 8px)/4 + 10px);border-radius:999px;z-index:2;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.03) 55%,rgba(255,255,255,.1));border:1px solid rgba(255,255,255,.5);-webkit-backdrop-filter:saturate(170%) brightness(1.1);backdrop-filter:saturate(170%) brightness(1.1);box-shadow:0 6px 16px rgba(0,0,0,.14),inset 0 1px 1px rgba(255,255,255,.75),inset 0 -1px 2px rgba(255,255,255,.3),inset 2px 0 4px -1px rgba(255,255,255,.3),inset -2px 0 4px -1px rgba(255,255,255,.25);transform:translateX(calc(var(--i,0)*(100% - 10px)));transition:opacity .3s}
 .lens.off{opacity:0}
 html.fx .lens{-webkit-backdrop-filter:url(#lensfx) saturate(170%) brightness(1.1);backdrop-filter:url(#lensfx) saturate(170%) brightness(1.1)}
-@media(prefers-color-scheme:dark){
+@media all{
 .tabs .tb button.on,.tabs .orb.on{color:#fff}
 .tabs .glass{box-shadow:0 8px 24px rgba(0,0,0,.5),inset 0 1px 1px rgba(255,255,255,.35),inset 0 -1px 1px rgba(255,255,255,.08)}
 .lens{border-color:rgba(255,255,255,.4)}}
@@ -130,7 +129,7 @@ html.fx .lens{-webkit-backdrop-filter:url(#lensfx) saturate(170%) brightness(1.1
 .s-gap{height:8px}
 .scn{display:flex;flex-direction:column;gap:10px}
 .scn-h{display:flex;justify-content:space-between;align-items:center;gap:10px}.scn-h b{font-size:17px}
-.s-tm{font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--tintd);background:rgba(37,211,102,.14);background:color-mix(in srgb,var(--tint) 16%,transparent);padding:3px 10px;border-radius:999px;white-space:nowrap}
+.s-tm{font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--tintd);background:rgba(200,176,122,.14);background:color-mix(in srgb,var(--tint) 16%,transparent);padding:3px 10px;border-radius:999px;white-space:nowrap}
 .s-loc{color:var(--mute);font-size:14px;margin-top:-6px}
 .blk{--bc:#8e8e93;border-radius:12px;padding:9px 12px;border-left:3px solid var(--bc);background:rgba(142,142,147,.12);background:color-mix(in srgb,var(--bc) 12%,transparent)}
 .blk .bt{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--bc);margin-bottom:3px}
@@ -144,6 +143,22 @@ html.fx .lens{-webkit-backdrop-filter:url(#lensfx) saturate(170%) brightness(1.1
 .dl.r .bub{border-radius:18px 18px 6px 18px}
 .dl .ex{font-size:13px;color:var(--mute);font-style:italic;margin:3px 8px 0}
 .ps{align-self:center;font-size:12.5px;color:var(--mute);padding:3px 12px;border-radius:999px;background:var(--act)}
+
+/* ===== KevinMiora: identitas visual dari logo (navy, teal, emas) ===== */
+:root{color-scheme:dark;--km-teal:#4f8a92;--km-gold:#c8b07a;--km-ink:#14181d;
+--bg:#12161b;--grp:#12161b;--cell:#1b2027;--tx:#eef0f2;--mute:#8d96a1;--sep:#2c333c;--tint:#c8b07a;--tintd:#d6c18d;--red:#ff6b5e;--bar:rgba(18,22,27,.82);--inp:#1b2027;
+--gl:rgba(27,32,39,.66);--gb:rgba(255,255,255,.08);--gsh:0 8px 28px rgba(0,0,0,.35);--act:rgba(255,255,255,.07);--wl:70%}
+html,body{background:var(--bg)}html.g{background:var(--bg)}
+#bg{background:radial-gradient(60% 34% at 8% 62%,rgba(79,138,146,.34),transparent 70%),radial-gradient(52% 34% at 95% 66%,rgba(200,176,122,.15),transparent 70%),radial-gradient(50% 30% at 75% 8%,rgba(79,138,146,.2),transparent 70%)}
+.plus,.btn,.vt .vtb.on,#msg.o{color:var(--km-ink)}
+.btn.busy::after{border-color:rgba(20,24,29,.3);border-top-color:var(--km-ink)}
+.tabs .tb button.on,.tabs .orb.on{color:var(--tintd)}
+header.n{background:rgba(18,22,27,.72)}
+.blk.cam{--bc:#5fa3ab}.blk.aud{--bc:#8fa7c9}.blk.dir{--bc:#c8b07a}
+.l .top{justify-content:space-between}.hl{height:34px;width:auto;display:block}
+.lgo{display:block;margin:0 auto 6px;width:120px;height:auto}
+.wm{font-size:30px!important;font-weight:600;letter-spacing:.2px;margin:10px 0 6px!important}.wm span{color:var(--km-teal)}.wm b{font-weight:600;color:var(--km-gold)}
+.lg .btn{box-shadow:0 6px 20px rgba(200,176,122,.18)}
 </style></head><body>
 <div id="pb"></div><div id="bg"></div><div id="app"><div class="empty" id="boot" style="padding-top:30vh">Memuat aplikasi…</div></div><div id="msg" role="alert"></div><svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="lensfx" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feImage id="lensmap" preserveAspectRatio="none" result="m"/><feDisplacementMap in="SourceGraphic" in2="m" scale="34" xChannelSelector="R" yChannelSelector="G"/></filter></svg><nav class="tabs hide" id="tabs"></nav>
 <script>
@@ -177,7 +192,7 @@ const now=()=>new Date().toISOString();
 function toast(t,ok){const m=$("#msg");m.className=ok?"o":"e";m.textContent=t;clearTimeout(toast.t);toast.t=setTimeout(()=>m.className="",ok?2200:7000)}
 const hue=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))%360;return h};
 const ini=s=>(s.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("")||"?").toUpperCase();
-const av=(n,t)=>`<div class="av" style="background:hsl(${hue(n)} 45% 48%)">${esc(t||ini(n))}</div>`;
+const av=(n,t)=>`<div class="av" style="background:${hue(n)%2?"hsl(187 30% 34%)":"hsl(41 38% 38%)"}">${esc(t||ini(n))}</div>`;
 const fld=(f,v)=>`<label class="f"><span>${f[1]}</span>${f[2]?`<textarea name="${f[0]}" rows="3">${esc(v)}</textarea>`:`<input name="${f[0]}" value="${esc(v)}">`}</label>`;
 const collect=(f,L)=>Object.fromEntries(L.map(x=>[x[0],(f.elements[x[0]].value||"").trim()||null]));
 const opts=(M,s)=>Object.entries(M).map(([k,v])=>`<option value="${k}" ${k===s?"selected":""}>${v}</option>`).join("");
@@ -191,8 +206,8 @@ async function ensureProject(){
 function loginView(){
   document.documentElement.classList.remove("g");lastInner="";$("#tabs").classList.add("hide");
   $("#app").className="nopad";
-  $("#app").innerHTML=`<div class="lg"><svg width="84" height="84" viewBox="0 0 84 84"><rect width="84" height="84" rx="20" fill="#25d366"/><ellipse cx="42" cy="38" rx="26" ry="23" fill="#fff"/><path d="M22 54l-4 14 20-9z" fill="#fff"/><text x="42" y="47" font-size="28" font-weight="700" fill="#128c7e" text-anchor="middle" font-family="sans-serif">K</text></svg>
-  <h1>Kevin Creator OS</h1><p>Masuk atau buat akun untuk mengelola @kevin_k.w.</p>
+  $("#app").innerHTML=`<div class="lg"><img class="lgo" src="logo-mark.png" alt="" width="120" height="96">
+  <h1 class="wm"><span>Kevin</span><b>Miora</b></h1><p>Masuk atau buat akun untuk mengelola @kevin_k.w.</p>
   <form data-form="login"><label class="f"><span>Email</span><input name="email" type="email" autocomplete="email" required></label>
   <label class="f"><span>Kata sandi (min. 8 karakter)</span><input name="password" type="password" autocomplete="current-password" required></label>
   <button class="btn" name="mode" value="login">Masuk</button><button class="link" name="mode" value="signup" formnovalidate>Buat akun baru</button></form></div>`;
@@ -459,7 +474,7 @@ function paint(r,anim,s,refresh){
   document.documentElement.classList.toggle("g",!!(r.grouped||s));
   const app=$("#app");app.className=s?"nopad":"";
   const head=s?`<header class="n"><button class="nb" data-act="back">‹ Kembali</button><span class="t">${esc(r.title)}</span>${r.save?`<button class="nb r" form="f">Simpan</button>`:"<span></span>"}</header>`
-   :`<header class="l"><div class="top">${r.plus?`<button class="plus" aria-label="Tambah" data-act="open" data-t="${r.plus}">+</button>`:""}</div><h1>${r.title}</h1>${r.search?`<input class="srch" id="q" type="search" placeholder="Cari">`:""}</header>`;
+   :`<header class="l"><div class="top"><img class="hl" src="logo-mark.png" alt="KevinMiora">${r.plus?`<button class="plus" aria-label="Tambah" data-act="open" data-t="${r.plus}">+</button>`:""}</div><h1>${r.title}</h1>${r.search?`<input class="srch" id="q" type="search" placeholder="Cari">`:""}</header>`;
   const inner=head+r.body,w=app.firstElementChild;
   tabsUI(!s);
   if(refresh&&w&&w.classList.contains("pg")){if(inner!==lastInner){w.innerHTML=inner;lastInner=inner}return}
@@ -630,13 +645,13 @@ const A={
   try{
    const {data:{session}}=await sb.auth.getSession();
    const r=await fetch("/.netlify/functions/test-ai",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify({provider:b.dataset.v})});
-   const j=await r.json();out.textContent=j.message;out.style.color=j.ok?"#25d366":"#ff3b30";
+   const j=await r.json();out.textContent=j.message;out.style.color=j.ok?"#6fb7bf":"#ff6b5e";
   }catch{out.textContent="Butuh deploy lewat GitHub (fungsi server).";out.style.color="#ff3b30"}
  }
 };
-const WALLS={hijau:{css:"",chip:"linear-gradient(135deg,#25d366,#0b3d24)"},biru:{css:"radial-gradient(60% 40% at 15% 70%,rgba(40,120,255,.5),transparent 70%),radial-gradient(55% 38% at 90% 25%,rgba(0,200,255,.4),transparent 70%),radial-gradient(50% 30% at 60% 95%,rgba(120,80,255,.4),transparent 70%)",chip:"linear-gradient(135deg,#2a7bff,#00c8ff)"},ungu:{css:"radial-gradient(60% 40% at 15% 65%,rgba(150,80,255,.5),transparent 70%),radial-gradient(55% 38% at 90% 30%,rgba(255,80,170,.4),transparent 70%),radial-gradient(50% 30% at 55% 98%,rgba(80,120,255,.35),transparent 70%)",chip:"linear-gradient(135deg,#8a4dff,#ff4fa3)"},senja:{css:"radial-gradient(60% 40% at 12% 70%,rgba(255,140,60,.55),transparent 70%),radial-gradient(55% 38% at 92% 30%,rgba(255,60,130,.45),transparent 70%),radial-gradient(50% 30% at 60% 98%,rgba(130,70,255,.4),transparent 70%)",chip:"linear-gradient(135deg,#ff8a3d,#ff3d7f)"},polos:{css:"none",chip:"#2a2a2c"}};
-function curWall(){let w=null;try{w=JSON.parse(localStorage.getItem("kos_wall")||"null")}catch{}return w?w.t==="img"?"foto":w.v:"hijau"}
-const ACC={hijau:"",biru:"#3b8cff",ungu:"#9b5cff",senja:"#ff8a3d",polos:""};
+const WALLS={miora:{css:"",chip:"linear-gradient(135deg,#4f8a92,#c8b07a)"},biru:{css:"radial-gradient(60% 40% at 15% 70%,rgba(40,120,255,.5),transparent 70%),radial-gradient(55% 38% at 90% 25%,rgba(0,200,255,.4),transparent 70%),radial-gradient(50% 30% at 60% 95%,rgba(120,80,255,.4),transparent 70%)",chip:"linear-gradient(135deg,#2a7bff,#00c8ff)"},ungu:{css:"radial-gradient(60% 40% at 15% 65%,rgba(150,80,255,.5),transparent 70%),radial-gradient(55% 38% at 90% 30%,rgba(255,80,170,.4),transparent 70%),radial-gradient(50% 30% at 55% 98%,rgba(80,120,255,.35),transparent 70%)",chip:"linear-gradient(135deg,#8a4dff,#ff4fa3)"},senja:{css:"radial-gradient(60% 40% at 12% 70%,rgba(255,140,60,.55),transparent 70%),radial-gradient(55% 38% at 92% 30%,rgba(255,60,130,.45),transparent 70%),radial-gradient(50% 30% at 60% 98%,rgba(130,70,255,.4),transparent 70%)",chip:"linear-gradient(135deg,#ff8a3d,#ff3d7f)"},polos:{css:"none",chip:"#1b2027"}};
+function curWall(){let w=null;try{w=JSON.parse(localStorage.getItem("kos_wall")||"null")}catch{}return w?w.t==="img"?"foto":w.v==="hijau"?"miora":w.v:"miora"}
+const ACC={hijau:"",miora:"",biru:"#3b8cff",ungu:"#9b5cff",senja:"#ff8a3d",polos:""};
 const toHex=c=>"#"+c.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0")).join("");
 function rgb2hsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2;let h=0,s=0;if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h*=60}return [h,s,l]}
 function hsl2rgb(h,s,l){const f=n=>{const k=(n+h/30)%12,a=s*Math.min(l,1-l);return 255*(l-a*Math.max(-1,Math.min(k-3,9-k,1)))};return [f(0),f(8),f(4)].map(Math.round)}
@@ -644,7 +659,7 @@ function setAccent(hex){
   const r=document.documentElement,st=r.style;
   if(!/^#[0-9a-f]{6}$/i.test(hex||"")){["--tint","--tintd","--wp"].forEach(k=>st.removeProperty(k));r.classList.remove("wpc");return}
   const [h,s0,l]=rgb2hsl(...[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16))),s=Math.max(s0,.62);
-  const dark=matchMedia("(prefers-color-scheme:dark)").matches,tint=hsl2rgb(h,s,Math.min(.62,Math.max(.5,l))),tintd=dark?tint:hsl2rgb(h,s,.38);
+  const dark=true,tint=hsl2rgb(h,s,Math.min(.62,Math.max(.5,l))),tintd=dark?tint:hsl2rgb(h,s,.38);
   st.setProperty("--tint",toHex(tint));st.setProperty("--tintd",toHex(tintd));st.setProperty("--wp",tint.join(","));r.classList.add("wpc");
 }
 async function dominant(url){
