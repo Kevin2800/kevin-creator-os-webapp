@@ -17,7 +17,7 @@
 html,body{margin:0;background:var(--bg);color:var(--tx);font:17px -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
 html.g{background:var(--grp)}body{background:transparent}
 #bg{position:fixed;inset:-10%;z-index:0;pointer-events:none;background-size:130% 130%;animation:drift 24s ease-in-out infinite alternate;background:radial-gradient(60% 34% at 10% 62%,rgba(37,211,102,.26),transparent 70%),radial-gradient(52% 34% at 92% 66%,rgba(70,110,255,.28),transparent 70%),radial-gradient(50% 30% at 75% 8%,rgba(37,211,102,.16),transparent 70%)}
-#app{position:relative;z-index:1;min-height:100vh;padding-top:env(safe-area-inset-top);padding-bottom:calc(104px + env(safe-area-inset-bottom))}
+#app{position:relative;z-index:1;min-height:100vh;padding-top:env(safe-area-inset-top);padding-bottom:calc(88px + env(safe-area-inset-bottom))}
 .nopad{padding-bottom:calc(24px + env(safe-area-inset-bottom))!important}
 header.l{padding:6px 16px 4px}.l .top{display:flex;justify-content:flex-end;height:40px;align-items:center}
 .l h1{font-size:34px;font-weight:700;margin:0 0 8px;letter-spacing:-.3px}
@@ -43,23 +43,11 @@ header.n .t{text-align:center;font-weight:600;font-size:17px;white-space:nowrap;
 .f input,.f textarea,.f select{width:100%;border:0;background:none;color:var(--tx);font:inherit;padding:2px 0;outline:0;resize:vertical}
 .btn{display:block;width:calc(100% - 32px);margin:16px;border:0;border-radius:12px;background:var(--tint);color:#fff;font:inherit;font-weight:600;padding:13px}
 .link{background:none;border:0;color:var(--tintd);font:inherit;padding:0;flex:none;white-space:nowrap}.grp>.c>span{flex:1;min-width:0}.grp .sub{white-space:normal}.red{color:var(--red)}
-.tabs{position:fixed;z-index:10;left:14px;right:14px;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:10px;transition:transform .6s var(--ease),opacity .3s}
-.pw{position:relative;flex:1}
 .glass{background:linear-gradient(180deg,rgba(255,255,255,.42),rgba(255,255,255,.12));border:1px solid rgba(255,255,255,.62);-webkit-backdrop-filter:blur(20px) saturate(200%) brightness(1.04);backdrop-filter:blur(20px) saturate(200%) brightness(1.04);box-shadow:0 12px 32px rgba(0,0,0,.22),inset 0 1.5px 1px rgba(255,255,255,.8),inset 0 -1px 2px rgba(255,255,255,.3)}
-.pill{display:flex;padding:6px;border-radius:999px}
-.tabs button{position:relative;z-index:1;flex:1;background:none;border:0;border-radius:999px;color:var(--tx);opacity:.72;font:500 10px -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0 7px}
-.tabs button.on{opacity:1;color:var(--tintd)}
-.tabs svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.tabs .orb{flex:none;width:62px;height:62px;padding:0;border-radius:50%;align-items:center;justify-content:center;opacity:.92}
-.tabs .orb svg{width:27px;height:27px}
-.tabs .orb.on{color:var(--tintd);border-color:rgba(255,255,255,.95);box-shadow:0 12px 32px rgba(0,0,0,.25),inset 3px 0 5px -1px rgba(255,90,70,.45),inset -3px 0 5px -1px rgba(70,130,255,.5),inset 0 2px 2px rgba(255,255,255,.9)}
-.lens{position:absolute;left:-1px;top:-7px;bottom:-7px;width:calc((100% - 12px)/4 + 14px);border-radius:999px;z-index:3;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,.04) 50%,rgba(255,255,255,.18));border:1.5px solid rgba(255,255,255,.85);-webkit-backdrop-filter:blur(1px) saturate(190%) brightness(1.2);backdrop-filter:blur(1px) saturate(190%) brightness(1.2);box-shadow:0 10px 26px rgba(0,0,0,.3),inset 3px 0 5px -1px rgba(255,90,70,.5),inset -3px 0 5px -1px rgba(70,130,255,.55),inset 0 2px 2px rgba(255,255,255,.9),inset 0 -2px 3px rgba(255,255,255,.45),inset 0 3px 3px -2px rgba(0,0,0,.35),inset 0 -3px 3px -2px rgba(0,0,0,.35),0 0 22px rgba(var(--wp,255,255,255),.32);transform:translateX(calc(var(--i,0)*(100% - 14px)));transition:opacity .3s}
-.lens.off{opacity:0}
 html.wpc .glass{background-color:rgba(var(--wp),.14);border-color:rgba(var(--wp),.55)}
-html.fx .lens{-webkit-backdrop-filter:url(#lensfx) blur(.6px) saturate(190%) brightness(1.2);backdrop-filter:url(#lensfx) blur(.6px) saturate(190%) brightness(1.2)}
 #bg.img{animation:none;inset:0;opacity:1!important}#bg.img::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.55)}
 @media(prefers-color-scheme:dark){.glass{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.05)),rgba(28,28,30,.26);border-color:rgba(255,255,255,.3);box-shadow:0 12px 32px rgba(0,0,0,.55),inset 0 1.5px 1px rgba(255,255,255,.4),inset 0 -1px 2px rgba(255,255,255,.1)}
-.tabs button.on,.tabs .orb.on{color:#fff}.lens{background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.05) 50%,rgba(255,255,255,.14));border-color:rgba(255,255,255,.7)}#bg.img::after{background:rgba(0,0,0,.5)}#bg{opacity:.65}.sk{background-image:linear-gradient(90deg,var(--cell),rgba(255,255,255,.07),var(--cell))}}
+.tabs button.on,.tabs .orb.on{color:#fff}#bg.img::after{background:rgba(0,0,0,.5)}#bg{opacity:.65}.sk{background-image:linear-gradient(90deg,var(--cell),rgba(255,255,255,.07),var(--cell))}}
 
 :root{--ease:cubic-bezier(.32,.72,0,1);--spring:cubic-bezier(.34,1.5,.64,1)}
 body{touch-action:manipulation}
@@ -85,6 +73,77 @@ button.busy::after{inset:0;margin:auto}.btn.busy::after{border-color:rgba(255,25
 #msg.e{display:block;background:#ff3b30;color:#fff}#msg.o{display:block;background:var(--tint);color:#fff}
 .lg{max-width:360px;margin:0 auto;padding:12vh 24px 24px;text-align:center}.lg h1{font-size:26px;margin:18px 0 6px}.lg p{color:var(--mute);margin:0 0 20px;font-size:15px}
 .lg .f{border-radius:12px;margin-bottom:10px;text-align:left}.lg .btn{width:100%;margin:6px 0}.lg .link{margin-top:10px;font-size:16px}
+/* ===== v13: tab bar ramping, kaca ala iOS, script terstruktur ===== */
+:root{--gl:rgba(255,255,255,.58);--gb:rgba(255,255,255,.7);--gsh:0 6px 24px rgba(0,0,0,.07);--act:rgba(120,120,128,.14);--wl:38%}
+@media(prefers-color-scheme:dark){:root{--gl:rgba(34,34,36,.5);--gb:rgba(255,255,255,.1);--gsh:0 8px 28px rgba(0,0,0,.3);--wl:70%}}
+#app{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+.nopad{padding-bottom:calc(24px + env(safe-area-inset-bottom))!important}
+
+/* card: kaca tipis, minimalis */
+.grp{background:var(--gl);-webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%);border:.5px solid var(--gb);border-radius:18px;box-shadow:var(--gsh)}
+.grp>.c{padding:12px 16px;border-bottom-color:rgba(128,128,128,.22)}
+.grp>.c.tap:active,.row:active{background:var(--act)}
+.f{background:transparent;border-bottom-color:rgba(128,128,128,.22)}
+.lg .f{background:var(--gl);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border:.5px solid var(--gb);border-radius:14px}
+.grp .sub{font-size:14px}
+header.n{background:rgba(249,249,249,.72);-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%)}
+@media(prefers-color-scheme:dark){header.n{background:rgba(18,18,18,.6)}}
+
+/* badge status */
+.pill{font-size:11.5px;font-weight:500;color:var(--tintd);background:rgba(37,211,102,.14);background:color-mix(in srgb,var(--tint) 16%,transparent);padding:3px 10px;border-radius:999px;align-self:center;margin-top:0;white-space:nowrap}
+
+/* tab bar */
+.tabs{position:fixed;z-index:10;left:22px;right:22px;bottom:calc(12px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:8px;transition:transform .6s var(--ease),opacity .3s}
+.pw{position:relative;flex:1;height:54px}
+.tp{position:absolute;inset:0;border-radius:999px}
+.tb{position:relative;z-index:3;display:flex;height:100%;padding:4px}
+.tabs .tb button{flex:1;min-width:0;background:none;border:0;border-radius:999px;color:var(--tx);opacity:.66;font:500 10px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:0}
+.tabs .tb button.on{opacity:1;color:var(--tintd)}
+.tabs svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tabs .orb{flex:none;width:54px;height:54px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:.9}
+.tabs .orb svg{width:23px;height:23px}
+.tabs .orb.on{opacity:1;color:var(--tintd);border-color:rgba(255,255,255,.85)}
+.tabs .glass{box-shadow:0 8px 22px rgba(0,0,0,.18),inset 0 1px 1px rgba(255,255,255,.7),inset 0 -1px 2px rgba(255,255,255,.25)}
+/* lensa tab aktif: bening seperti tetes air, teks tetap tajam karena berada di atas lensa */
+.lens{position:absolute;left:-1px;top:-3px;bottom:-3px;width:calc((100% - 8px)/4 + 10px);border-radius:999px;z-index:2;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.03) 55%,rgba(255,255,255,.1));border:1px solid rgba(255,255,255,.5);-webkit-backdrop-filter:saturate(170%) brightness(1.1);backdrop-filter:saturate(170%) brightness(1.1);box-shadow:0 6px 16px rgba(0,0,0,.14),inset 0 1px 1px rgba(255,255,255,.75),inset 0 -1px 2px rgba(255,255,255,.3),inset 2px 0 4px -1px rgba(255,255,255,.3),inset -2px 0 4px -1px rgba(255,255,255,.25);transform:translateX(calc(var(--i,0)*(100% - 10px)));transition:opacity .3s}
+.lens.off{opacity:0}
+html.fx .lens{-webkit-backdrop-filter:url(#lensfx) saturate(170%) brightness(1.1);backdrop-filter:url(#lensfx) saturate(170%) brightness(1.1)}
+@media(prefers-color-scheme:dark){
+.tabs .tb button.on,.tabs .orb.on{color:#fff}
+.tabs .glass{box-shadow:0 8px 24px rgba(0,0,0,.5),inset 0 1px 1px rgba(255,255,255,.35),inset 0 -1px 1px rgba(255,255,255,.08)}
+.lens{border-color:rgba(255,255,255,.4)}}
+
+/* tab script */
+.vt{display:flex;gap:6px;padding:8px 16px;overflow-x:auto;scrollbar-width:none}
+.vt::-webkit-scrollbar{display:none}
+.vt .vtb{flex:none;padding:6px 12px;border-radius:999px;border:.5px solid var(--gb);background:var(--gl);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:var(--tx);font-size:14px;font-weight:500}
+.vt .vtb.on{background:var(--tint);color:#fff;border-color:transparent}
+
+/* isi script */
+.scr{margin:0 16px;display:flex;flex-direction:column;gap:14px;line-height:1.5}
+.sbox,.scn{background:var(--gl);-webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%);border:.5px solid var(--gb);border-radius:18px;box-shadow:var(--gsh);padding:12px 14px}
+.s-h{font-weight:600;font-size:14px;color:var(--mute);margin:10px 0 4px}.s-h:first-child{margin-top:0}
+.s-kv{display:grid;grid-template-columns:84px 1fr;gap:12px;padding:7px 0;border-bottom:.5px solid rgba(128,128,128,.2)}
+.s-kv:last-child{border-bottom:0}
+.s-k{color:var(--mute);font-size:13.5px;padding-top:1px}.s-v{font-size:15.5px;word-break:break-word}
+.s-p,.s-ln{margin:0;font-size:15.5px;word-break:break-word}.s-ln{padding:2px 0}.s-li{padding:2px 0 2px 16px;text-indent:-16px;font-size:15.5px}
+.s-gap{height:8px}
+.scn{display:flex;flex-direction:column;gap:10px}
+.scn-h{display:flex;justify-content:space-between;align-items:center;gap:10px}.scn-h b{font-size:17px}
+.s-tm{font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--tintd);background:rgba(37,211,102,.14);background:color-mix(in srgb,var(--tint) 16%,transparent);padding:3px 10px;border-radius:999px;white-space:nowrap}
+.s-loc{color:var(--mute);font-size:14px;margin-top:-6px}
+.blk{--bc:#8e8e93;border-radius:12px;padding:9px 12px;border-left:3px solid var(--bc);background:rgba(142,142,147,.12);background:color-mix(in srgb,var(--bc) 12%,transparent)}
+.blk .bt{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--bc);margin-bottom:3px}
+.blk svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.blk p{margin:0;font-size:15px;word-break:break-word}
+.blk.cam{--bc:#0a84ff}.blk.aud{--bc:#bf5af2}.blk.dir{--bc:#ff9f0a}
+.dl{display:flex;flex-direction:column;max-width:90%;align-self:flex-start}
+.dl.r{align-self:flex-end;align-items:flex-end}
+.dl .who{font-size:13px;font-weight:600;color:hsl(var(--h) 65% var(--wl));margin:0 6px 3px}
+.dl .bub{background:hsl(var(--h) 55% 50%/.16);border:.5px solid hsl(var(--h) 55% 55%/.32);border-radius:18px 18px 18px 6px;padding:10px 14px;font-size:17px;line-height:1.45;font-weight:500;word-break:break-word}
+.dl.r .bub{border-radius:18px 18px 6px 18px}
+.dl .ex{font-size:13px;color:var(--mute);font-style:italic;margin:3px 8px 0}
+.ps{align-self:center;font-size:12.5px;color:var(--mute);padding:3px 12px;border-radius:999px;background:var(--act)}
 </style></head><body>
 <div id="pb"></div><div id="bg"></div><div id="app"><div class="empty" id="boot" style="padding-top:30vh">Memuat aplikasi…</div></div><div id="msg" role="alert"></div><svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="lensfx" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feImage id="lensmap" preserveAspectRatio="none" result="m"/><feDisplacementMap in="SourceGraphic" in2="m" scale="34" xChannelSelector="R" yChannelSelector="G"/></filter></svg><nav class="tabs hide" id="tabs"></nav>
 <script>
@@ -138,6 +197,87 @@ function loginView(){
   <label class="f"><span>Kata sandi (min. 8 karakter)</span><input name="password" type="password" autocomplete="current-password" required></label>
   <button class="btn" name="mode" value="login">Masuk</button><button class="link" name="mode" value="signup" formnovalidate>Buat akun baru</button></form></div>`;
 }
+
+/* ===== format script: pisahkan adegan, kamera, dan dialog ===== */
+const SVG=p=>`<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
+const IC={cam:SVG('<rect x="2" y="7" width="14" height="11" rx="2"/><path d="M16 11l6-3v9l-6-3"/>'),act:SVG('<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),aud:SVG('<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 010 7"/>'),dir:SVG('<path d="M5 4h11l3 3v13H5z"/><path d="M9 11h6M9 15h6"/>')};
+const BN={cam:"Shoot kamera",act:"Adegan",aud:"Audio",dir:"Catatan sutradara"};
+const SL=/^\s*(?:[-*•>]+\s*)?(?:\*\*|__)?\s*(TIMESTAMP|LOKASI|SHOT|AKSI|KARAKTER|DIALOG|EKSPRESI|PAUSE|AUDIO|CATATAN SUTRADARA)(?:\s*\d+)?(?:\s*\(([^)]*)\))?\s*(?:\*\*|__)?\s*[:：]\s*(?:\*\*|__)?\s*(.*)$/i;
+const SH=/^\s*(?:#+\s*)?(?:\*\*|__)?\s*((?:ADEGAN|SCENE)\s*\d+[^\n]{0,60})$/i;
+const KV=/^\s*([A-Za-zÀ-ÿ][^:.,;!?"“]{1,28}):\s*(.*)$/;
+const cln=s=>String(s||"").replace(/\*\*|__/g,"").trim();
+function parseScript(raw){
+  const sum=[],scenes=[];let sc=null,who="",pexp="",sw=false;
+  const last=()=>sc&&sc.items[sc.items.length-1];
+  const nsc=t=>{sc={title:t||"",ts:"",loc:"",items:[]};scenes.push(sc);who="";pexp="";sw=false};
+  for(const line of String(raw).split(/\r?\n/)){
+    if(!line.trim())continue;
+    const m=line.match(SL),h=!m&&line.match(SH);
+    if(h){nsc(cln(h[1]));continue}
+    if(m){
+      const L=m[1].toUpperCase(),par=cln(m[2]),v=cln(m[3]);
+      if(L==="TIMESTAMP"){if(!sc||sc.items.length||sc.ts)nsc();sc.ts=v;continue}
+      if(L==="LOKASI"){if(!sc){sum.push({k:"Lokasi",v});continue}if(sc.items.length||sc.loc)nsc();sc.loc=v;continue}
+      if(!sc&&L!=="KARAKTER")nsc();
+      if(!sc){sum.push({k:"Karakter",v});continue}
+      if(L==="SHOT")sc.items.push({t:"cam",v});
+      else if(L==="AKSI")sc.items.push({t:"act",v});
+      else if(L==="AUDIO")sc.items.push({t:"aud",v});
+      else if(L==="CATATAN SUTRADARA")sc.items.push({t:"dir",v});
+      else if(L==="PAUSE")sc.items.push({t:"ps",v});
+      else if(L==="KARAKTER"){who=v;sw=true}
+      else if(L==="EKSPRESI"){const l=last();if(!sw&&l&&l.t==="dlg"&&!l.e)l.e=v;else pexp=v}
+      else if(L==="DIALOG"){
+        let w=par||who,t=v;
+        if(!w){const q=t.match(/^([^:"“]{1,24}):\s*(.+)$/);if(q){w=cln(q[1]);t=q[2]}}
+        sc.items.push({t:"dlg",w,v:t.replace(/^["“”]+|["“”]+$/g,""),e:pexp});pexp="";sw=false;
+      }
+      continue;
+    }
+    const t=cln(line);
+    if(!sc){
+      const q=t.match(KV);
+      if(q)sum.push(q[2]?{k:q[1],v:q[2]}:{h:q[1]});
+      else if(sum.length&&sum[sum.length-1].v!==undefined)sum[sum.length-1].v+=" "+t;
+      else sum.push({p:t});
+      continue;
+    }
+    const l=last();
+    if(l&&l.v!==undefined)l.v+=" "+t;else sc.items.push({t:"act",v:t});
+  }
+  return {sum,scenes};
+}
+function fmtScript(raw){
+  const p=parseScript(raw);
+  if(!p.scenes.length)return fmtText(raw);
+  let o="";
+  if(p.sum.length)o+=`<div class="sbox">`+p.sum.map(x=>x.h?`<div class="s-h">${esc(x.h)}</div>`:x.k?`<div class="s-kv"><span class="s-k">${esc(x.k)}</span><span class="s-v">${esc(x.v)}</span></div>`:`<p class="s-p">${esc(x.p)}</p>`).join("")+`</div>`;
+  const spk={};
+  p.scenes.forEach((sc,i)=>{
+    o+=`<section class="scn"><div class="scn-h"><b>${esc(sc.title||"Adegan "+(i+1))}</b>${sc.ts?`<span class="s-tm">${esc(sc.ts)}</span>`:""}</div>${sc.loc?`<div class="s-loc">${esc(sc.loc)}</div>`:""}`;
+    o+=sc.items.map(it=>{
+      if(it.t==="dlg"){
+        const k=(it.w||"?").toLowerCase();if(!(k in spk))spk[k]=Object.keys(spk).length;
+        return `<div class="dl${spk[k]%2?" r":""}" style="--h:${hue(k)}"><div class="who">${esc(it.w||"Dialog")}</div><div class="bub">${esc(it.v)}</div>${it.e?`<div class="ex">${esc(it.e)}</div>`:""}</div>`;
+      }
+      if(it.t==="ps")return `<div class="ps">Jeda ${esc(it.v)}</div>`;
+      return `<div class="blk ${it.t}"><div class="bt">${IC[it.t]}${BN[it.t]}</div><p>${esc(it.v)}</p></div>`;
+    }).join("")+`</section>`;
+  });
+  return o;
+}
+function fmtText(raw){
+  return `<div class="sbox">`+String(raw).split(/\r?\n/).map(l=>{
+    const t=l.replace(/\*\*|__/g,"").replace(/^\s*#+\s*/,"");
+    if(!t.trim())return `<div class="s-gap"></div>`;
+    if(/^\s*(?:[-*•]|\d+[.)])\s+/.test(t))return `<div class="s-li">${esc(t.trim())}</div>`;
+    const q=t.match(KV);
+    if(q)return q[2]?`<div class="s-ln"><b>${esc(q[1])}:</b> ${esc(q[2])}</div>`:`<div class="s-h">${esc(q[1])}</div>`;
+    return `<div class="s-ln">${esc(t)}</div>`;
+  }).join("")+`</div>`;
+}
+const fmtOut=(t,k)=>{const r=t||"";return `<div id="out" class="scr" data-raw="${esc(r)}">${r.trim()?(k==="script"?fmtScript(r):fmtText(r)):`<div class="empty">(kosong)</div>`}</div>`};
+const vtabs=TB=>`<div class="vt">${Object.entries(TB).map(([k,l])=>`<button class="link vtb${k===vtab?" on":""}" data-act="vtab" data-v="${k}">${l}</button>`).join("")}</div>`;
 
 /* ===== layar ===== */
 const roots={
@@ -261,8 +401,7 @@ const pushed={
   }
   const c=d.script||{},TB={script:"Script",teknis:"Teknis",pub:"Publikasi",asumsi:"Asumsi"};
   let t={script:c.script,teknis:c.arahan_teknis,pub:c.paket_publikasi,asumsi:c.asumsi}[vtab];if(Array.isArray(t))t=t.join("\n");
-  return {title:esc(d.chosen?.judul||"Script"),body:`<div style="display:flex;gap:6px;padding:8px 16px;overflow-x:auto">${Object.entries(TB).map(([k,l])=>`<button class="link" data-act="vtab" data-v="${k}" style="padding:6px 14px;border-radius:999px;border:1px solid var(--sep);${k===vtab?"background:var(--tint);color:#fff;border-color:var(--tint)":""}">${l}</button>`).join("")}</div>
-  <pre id="out" style="white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:15px;line-height:1.5;margin:0 16px;padding:14px;background:var(--cell);border-radius:12px">${esc(t||"(kosong)")}</pre>
+  return {title:esc(d.chosen?.judul||"Script"),body:`${vtabs(TB)}${fmtOut(t,vtab)}
   <form data-form="rev" data-id="${d.id}"><div class="gt">Chat revisi</div><div class="grp"><label class="f"><span>Perintah ke AI</span><textarea name="ins" rows="2" placeholder="mis. dialog Angel dibuat lebih santai"></textarea></label></div><button class="btn" style="background:var(--cell);color:var(--tintd)">Kirim revisi</button></form>
   <div class="grp"><div class="c tap" data-act="copy"><span>Salin teks tab ini</span></div><div class="c tap" data-act="dregen" data-id="${d.id}"><span>Tidak cocok, generate ulang</span></div></div>
   <button class="btn" data-act="dapprove" data-id="${d.id}">Setujui dan simpan sebagai episode</button>
@@ -284,8 +423,7 @@ const pushed={
   if(v.status==="gagal")return {title:ttl,body:`<div class="empty">Gagal membuat script.<br><span class="red">${esc(v.error||"Terjadi kesalahan.")}</span></div><button class="btn" data-act="retry" data-id="${v.id}">Coba lagi</button>`};
   const c=v.content||{},TB={script:"Script",teknis:"Teknis",pub:"Publikasi",asumsi:"Asumsi"};
   let t={script:c.script,teknis:c.arahan_teknis,pub:c.paket_publikasi,asumsi:c.asumsi}[vtab];if(Array.isArray(t))t=t.join("\n");
-  return {title:ttl,body:`<div style="display:flex;gap:6px;padding:8px 16px;overflow-x:auto">${Object.entries(TB).map(([k,l])=>`<button class="link" data-act="vtab" data-v="${k}" style="padding:6px 14px;border-radius:999px;border:1px solid var(--sep);${k===vtab?"background:var(--tint);color:#fff;border-color:var(--tint)":""}">${l}</button>`).join("")}</div>
-  <pre id="out" style="white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:15px;line-height:1.5;margin:0 16px;padding:14px;background:var(--cell);border-radius:12px">${esc(t||"(kosong)")}</pre>
+  return {title:ttl,body:`${vtabs(TB)}${fmtOut(t,vtab)}
   <div class="grp" style="margin-top:16px"><div class="c tap" data-act="copy"><span>Salin teks tab ini</span></div><div class="c tap" data-act="approve" data-id="${v.id}"><span>${v.approved?"✓ Versi ini sudah disetujui":"Setujui versi ini"}</span></div></div>
   <p class="sub" style="margin:10px 32px;white-space:normal">Dibuat oleh ${esc(c.model||"AI")}. Ini saran AI; keputusan akhir ada di Anda. Setiap pembuatan disimpan sebagai versi baru.</p>`};
  },
@@ -304,16 +442,16 @@ const typing=()=>{const a=document.activeElement;return a&&$("#app").contains(a)
 const PILL=TABS.filter(x=>x[0]!=="ai"),ORB=TABS.find(x=>x[0]==="ai");
 function tabsUI(show){
   const t=$("#tabs");
-  if(!t.querySelector(".pill"))t.innerHTML=`<div class="pw"><div class="pill glass">${PILL.map(x=>`<button data-act="tab" data-v="${x[0]}"><svg viewBox="0 0 24 24">${x[2]}</svg>${x[1]}</button>`).join("")}</div><i class="lens off"></i></div><button class="orb glass" data-act="tab" data-v="ai" aria-label="${ORB[1]}"><svg viewBox="0 0 24 24">${ORB[2]}</svg></button>`;
+  if(!t.querySelector(".tp"))t.innerHTML=`<div class="pw"><div class="tp glass"></div><i class="lens off"></i><div class="tb">${PILL.map(x=>`<button data-act="tab" data-v="${x[0]}"><svg viewBox="0 0 24 24">${x[2]}</svg>${x[1]}</button>`).join("")}</div></div><button class="orb glass" data-act="tab" data-v="ai" aria-label="${ORB[1]}"><svg viewBox="0 0 24 24">${ORB[2]}</svg></button>`;
   t.classList.toggle("hide",!show);
   const k=PILL.findIndex(x=>x[0]===tab),lens=t.querySelector(".lens"),prev=+(t.dataset.pi||0);
-  t.querySelectorAll(".pill button").forEach((b,n)=>b.classList.toggle("on",n===k));
+  t.querySelectorAll(".tb button").forEach((b,n)=>b.classList.toggle("on",n===k));
   t.querySelector(".orb").classList.toggle("on",k<0);
   if(k<0){lens.classList.add("off");return}
   const wasOff=lens.classList.contains("off");lens.classList.remove("off");
   if(k!==prev||wasOff){
     lens.style.setProperty("--i",k);t.dataset.pi=k;
-    if(!wasOff&&lens.animate&&!matchMedia("(prefers-reduced-motion:reduce)").matches)lens.animate([{transform:`translateX(calc(${prev}*(100% - 14px))) scale(1)`},{transform:`translateX(calc(${(prev+k)/2}*(100% - 14px))) scale(1.5,.94)`,offset:.45},{transform:`translateX(calc(${k}*(100% - 14px))) scale(1)`}],{duration:650,easing:"cubic-bezier(.34,1.35,.64,1)"});
+    if(!wasOff&&lens.animate&&!matchMedia("(prefers-reduced-motion:reduce)").matches)lens.animate([{transform:`translateX(calc(${prev}*(100% - 10px))) scale(1)`},{transform:`translateX(calc(${(prev+k)/2}*(100% - 10px))) scale(1.5,.94)`,offset:.45},{transform:`translateX(calc(${k}*(100% - 10px))) scale(1)`}],{duration:650,easing:"cubic-bezier(.34,1.35,.64,1)"});
   }
 }
 function skel(s){return {title:s?"":rootTitle(),body:`<div style="padding-top:6px"><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>`}}
@@ -480,7 +618,7 @@ const A={
   toast("Tersimpan sebagai EP"+n,1);resetNav();tab="eps";render(3);
  },
  async retry(b){chk(await sb.from("script_versions").update({status:"menunggu",error:null,created_at:now()}).eq("id",b.dataset.id));await runGen(b.dataset.id);render()},
- async copy(){await navigator.clipboard.writeText($("#out").textContent);toast("Tersalin",1)},
+ async copy(){await navigator.clipboard.writeText($("#out").dataset.raw);toast("Tersalin",1)},
  async approve(b){if(!confirm("Setujui versi ini sebagai versi final?"))return;chk(await sb.from("script_versions").update({approved:true}).eq("id",b.dataset.id));toast("Versi disetujui",1);render()},
  vtab:b=>{vtab=b.dataset.v;render()},
  open:b=>nav({t:b.dataset.t,id:b.dataset.id||null,i:b.dataset.i}),
