@@ -159,6 +159,19 @@ header.n{background:rgba(18,22,27,.72)}
 .lgo{display:block;margin:0 auto 6px;width:120px;height:auto}
 .wm{font-size:30px!important;font-weight:600;letter-spacing:.2px;margin:10px 0 6px!important}.wm span{color:var(--km-teal)}.wm b{font-weight:600;color:var(--km-gold)}
 .lg .btn{box-shadow:0 6px 20px rgba(200,176,122,.18)}
+
+/* ===== kartu daftar (semua tab) ===== */
+:root{--gl:rgba(20,25,31,.74);--gb:rgba(255,255,255,.1);--mute:#9aa3ae}
+#bg.img::after{background:rgba(0,0,0,.62)}
+.row{background:var(--gl);-webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%);border:.5px solid var(--gb);border-radius:18px;margin:8px 16px;padding:12px 14px;box-shadow:var(--gsh)}
+.row .mid{border:0;padding:0;margin:0;align-items:center}
+.row .av{width:46px;height:46px;font-size:16px}
+.row .pill{margin-left:6px}
+.rd{flex:none;width:36px;height:36px;margin-right:-4px;border:0;border-radius:50%;padding:0;background:rgba(255,255,255,.07);color:var(--mute);display:flex;align-items:center;justify-content:center}
+.rd svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.rd:active{color:var(--red);background:rgba(255,107,94,.16)}
+.gt{text-shadow:0 1px 8px rgba(0,0,0,.7)}
+.tabs .glass{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04)),rgba(20,26,32,.6);border-color:rgba(200,176,122,.38)}
 </style></head><body>
 <div id="pb"></div><div id="bg"></div><div id="app"><div class="empty" id="boot" style="padding-top:30vh">Memuat aplikasi…</div></div><div id="msg" role="alert"></div><svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="lensfx" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feImage id="lensmap" preserveAspectRatio="none" result="m"/><feDisplacementMap in="SourceGraphic" in2="m" scale="34" xChannelSelector="R" yChannelSelector="G"/></filter></svg><nav class="tabs hide" id="tabs"></nav>
 <script>
@@ -295,6 +308,15 @@ const fmtOut=(t,k)=>{const r=t||"";return `<div id="out" class="scr" data-raw="$
 const vtabs=TB=>`<div class="vt">${Object.entries(TB).map(([k,l])=>`<button class="link vtb${k===vtab?" on":""}" data-act="vtab" data-v="${k}">${l}</button>`).join("")}</div>`;
 
 /* ===== layar ===== */
+const PROV=[
+ {id:"gemini",name:"Gemini",env:"GEMINI_API_KEY",model:"gemini-flash-latest",tag:"Ada paket gratis"},
+ {id:"groq",name:"Groq",env:"GROQ_API_KEY",model:"llama-3.3-70b-versatile",tag:"Ada paket gratis"},
+ {id:"openrouter",name:"OpenRouter",env:"OPENROUTER_API_KEY",model:"openrouter/free",tag:"Ada model gratis (:free)"},
+ {id:"mistral",name:"Mistral",env:"MISTRAL_API_KEY",model:"mistral-small-latest",tag:"Ada paket gratis terbatas"},
+ {id:"deepseek",name:"DeepSeek",env:"DEEPSEEK_API_KEY",model:"deepseek-chat",tag:"Berbayar, murah"},
+ {id:"openai",name:"OpenAI",env:"OPENAI_API_KEY",model:"gpt-4o-mini",tag:"Berbayar"},
+ {id:"anthropic",name:"Claude (Anthropic)",env:"ANTHROPIC_API_KEY",model:"claude-haiku-5-5",tag:"Berbayar, tanpa paket gratis"}
+];
 const roots={
  async brand(){
   const {data:b}=chk(await sb.from("brand_profiles").select("*").maybeSingle());const d=b?.data||{};
@@ -308,7 +330,7 @@ const roots={
  async eps(){
   const [{data:l},{data:dr}]=(await Promise.all([sb.from("episodes").select("id,number,title,summary,status").order("number"),sb.from("drafts").select("id,status,chosen,created_at").neq("status","disetujui").order("created_at",{ascending:false})])).map(chk);
   const DS={ide_menunggu:"AI menyusun ide…",ide_siap:"Pilih ide",script_menunggu:"AI menulis script…",script_siap:"Review script",gagal:"Gagal"};
-  const dh=dr.length?`<div class="gt" style="margin-top:6px">Draf berjalan</div>`+dr.map(x=>`<div class="row" data-act="open" data-t="draft" data-id="${x.id}">${av("Draf","✨")}<div class="mid"><div><b>${esc(x.chosen?.judul||"Draf episode baru")}</b><small>${DS[x.status]}</small></div></div></div>`).join("")+`<div class="gt">Episode</div>`:"";
+  const dh=dr.length?`<div class="gt" style="margin-top:6px">Draf berjalan</div>`+dr.map(x=>`<div class="row" data-act="open" data-t="draft" data-id="${x.id}">${av("Draf","✨")}<div class="mid"><div><b>${esc(x.chosen?.judul||"Draf episode baru")}</b><small>${DS[x.status]}</small></div></div><button class="rd" type="button" aria-label="Hapus draf" data-act="del" data-tb="drafts" data-id="${x.id}" data-n="${esc(x.chosen?.judul||"draf ini")}"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5M10 11v5M14 11v5"/></svg></button></div>`).join("")+`<div class="gt">Episode</div>`:"";
   return {title:"Episode",plus:"newdraft",search:1,body:dh+(l.length?l.map(e=>`<div class="row" data-act="open" data-t="ep" data-id="${e.id}">${av(e.title,"EP"+e.number)}<div class="mid"><div><b>${esc(e.title)}</b><small>${esc(e.summary||"Belum ada ringkasan")}</small></div><span class="pill">${ES[e.status]}</span></div></div>`).join(""):`<div class="empty">Belum ada episode.<br>Ketuk tombol + untuk membuat episode dengan AI.</div>`)};
  },
  async ana(){
@@ -321,14 +343,15 @@ const roots={
  },
  async ai(){
   const {data:s}=chk(await sb.from("ai_provider_settings").select("*").maybeSingle());
-  return {title:"Pengaturan",grouped:1,body:`<div class="gt">Koneksi AI</div><div class="grp">${[["gemini","Gemini"],["openai","OpenAI"]].map(p=>`<div class="c"><span>${p[1]}<small class="sub" id="t-${p[0]}">Belum diuji</small></span><button class="link" data-act="test" data-v="${p[0]}">Test Connection</button></div>`).join("")}</div>
-  <p class="sub" style="margin:8px 32px;white-space:normal">API key diisi di Netlify (Environment variables <code>GEMINI_API_KEY</code> / <code>OPENAI_API_KEY</code>), bukan di aplikasi ini.</p>
-  <form data-form="ai"><div class="gt">Preferensi</div><div class="grp">${sel("Provider default","default_provider",{gemini:"Gemini",openai:"OpenAI"},s?.default_provider||"gemini")}
-  <label class="f"><span>Model Gemini</span><input name="model_gemini" required value="${esc(s?.model_gemini||"gemini-flash-latest")}"></label>
-  <label class="f"><span>Model OpenAI</span><input name="model_openai" required value="${esc(s?.model_openai||"gpt-4o-mini")}"></label>
-  <label class="f"><span>Batas output (token, 100–32000)</span><input name="max_output_tokens" type="number" min="100" max="32000" required value="${s?.max_output_tokens||4000}"></label></div>
+  return {title:"Pengaturan",grouped:1,body:`<div class="gt">Koneksi AI</div><div class="grp">${PROV.map(p=>`<div class="c"><span>${p.name}<small class="sub">${p.tag} · ${p.env}</small><small class="sub" id="t-${p.id}">Belum diuji</small></span><button class="link" data-act="test" data-v="${p.id}">Test Connection</button></div>`).join("")}</div>
+  <p class="sub" style="margin:8px 32px;white-space:normal">API key diisi di Netlify (Environment variables dengan nama seperti di atas), bukan di aplikasi ini. Cukup isi provider yang ingin dipakai. Ketersediaan paket gratis bisa berubah, cek di situs masing-masing provider.</p>
+  <form data-form="ai"><div class="gt">Preferensi</div><div class="grp">${sel("Provider default","default_provider",Object.fromEntries(PROV.map(p=>[p.id,p.name])),s?.default_provider||"gemini")}
+  ${sel("Provider cadangan (dipakai otomatis jika provider default gagal)","fallback_provider",{"":"Tidak ada",...Object.fromEntries(PROV.map(p=>[p.id,p.name]))},s?.models?._fallback||"")}
+  <label class="f"><span>Batas output (token, 100–32000)</span><input name="max_output_tokens" type="number" min="100" max="32000" required value="${s?.max_output_tokens||8000}"></label></div>
+  <div class="gt">Model per provider</div><div class="grp">${PROV.map(p=>`<label class="f"><span>${p.name}</span><input name="m_${p.id}" placeholder="${p.model}" autocapitalize="none" autocomplete="off" value="${esc(s?.models?.[p.id]||(p.id==="gemini"?s?.model_gemini:p.id==="openai"?s?.model_openai:"")||"")}"></label>`).join("")}</div>
+  <p class="sub" style="margin:8px 32px;white-space:normal">Kosongkan kolom model untuk memakai model bawaan (huruf abu-abu). Nama model gratis sering berganti, jika error 404 ganti sesuai daftar di situs provider.</p>
   <button class="btn">Simpan pengaturan</button></form>
-  <div class="gt">Tampilan</div><div class="grp"><div class="f"><span>Wallpaper (warna aplikasi dan kaca tab bar ikut wallpaper)</span><div style="display:flex;gap:12px;flex-wrap:wrap;padding:8px 0 4px">${Object.entries(WALLS).map(([k,w])=>`<button type="button" data-act="wall" data-v="${k}" aria-label="Wallpaper ${k}" style="flex:none;width:44px;height:44px;padding:0;border-radius:50%;border:3px solid ${curWall()===k?"var(--tint)":"transparent"};background:${w.chip}"></button>`).join("")}</div></div>
+  <div class="gt">Tampilan</div><div class="grp"><div class="f"><span>Wallpaper</span><div style="display:flex;gap:12px;flex-wrap:wrap;padding:8px 0 4px">${Object.entries(WALLS).map(([k,w])=>`<button type="button" data-act="wall" data-v="${k}" aria-label="Wallpaper ${k}" style="flex:none;width:44px;height:44px;padding:0;border-radius:50%;border:3px solid ${curWall()===k?"var(--tint)":"transparent"};background:${w.chip}"></button>`).join("")}</div></div>
   <label class="c tap"><span>Pilih foto dari galeri${curWall()==="foto"?'<small class="sub">Foto sedang dipakai</small>':""}</span><input type="file" accept="image/*" id="wallfile" hidden></label>
   <div class="c tap" data-act="fx"><span>Efek kaca refraksi<small class="sub">Hanya di Chrome Android. Matikan jika terasa berat.</small></span><b style="font-size:13px">${fxOn()?"Aktif":"Mati"}</b></div></div>
   <div class="gt">Akun</div><div class="grp"><div class="c"><span>${esc(user.email)}</span></div><div class="c tap" data-act="out"><span class="red">Keluar</span></div></div>`};
@@ -536,6 +559,7 @@ async function runGen(id){
     await sb.from("script_versions").update({status:"gagal",error:"Fungsi server tidak dapat dijalankan ("+e.message+"). Pastikan deploy lewat GitHub."}).eq("id",id);
   }
 }
+{const _d=pushed.draft;pushed.draft=async function(s){const r=await _d.call(pushed,s);r.body+=`<div class="grp" style="margin-top:20px"><div class="c tap" data-act="del" data-tb="drafts" data-id="${s.id}" data-n="draf ini"><span class="red">Hapus draf</span></div></div>`;return r}}
 const H={
  async login(f,ev){
   const cred={email:f.elements.email.value.trim(),password:f.elements.password.value};
@@ -605,7 +629,17 @@ const H={
  async ai(f){
   const t=parseInt(f.elements.max_output_tokens.value,10);
   if(!(t>=100&&t<=32000))return toast("Batas token harus 100–32000.");
-  chk(await sb.from("ai_provider_settings").upsert({project_id:pid,default_provider:f.elements.default_provider.value,model_gemini:f.elements.model_gemini.value.trim(),model_openai:f.elements.model_openai.value.trim(),max_output_tokens:t}));
+  const g=n=>f.elements[n].value.trim(),models={};
+  PROV.forEach(p=>{const v=g("m_"+p.id);if(v)models[p.id]=v});
+  const fb=g("fallback_provider");if(fb)models._fallback=fb;
+  const row={project_id:pid,default_provider:g("default_provider"),model_gemini:models.gemini||"gemini-flash-latest",model_openai:models.openai||"gpt-4o-mini",max_output_tokens:t,models};
+  let r=await sb.from("ai_provider_settings").upsert(row);
+  if(r.error){
+   const old={...row};delete old.models;
+   const r2=await sb.from("ai_provider_settings").upsert(old);
+   if(r2.error)return toast("Gagal menyimpan. Jalankan file supabase-ai-providers.sql di Supabase (SQL Editor) lalu coba lagi.");
+   return toast("Tersimpan sebagian. Jalankan supabase-ai-providers.sql di Supabase agar provider baru dan cadangan aktif.");
+  }
   toast("Pengaturan tersimpan",1);
  }
 };
@@ -655,7 +689,7 @@ const ACC={hijau:"",miora:"",biru:"#3b8cff",ungu:"#9b5cff",senja:"#ff8a3d",polos
 const toHex=c=>"#"+c.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0")).join("");
 function rgb2hsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2;let h=0,s=0;if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h*=60}return [h,s,l]}
 function hsl2rgb(h,s,l){const f=n=>{const k=(n+h/30)%12,a=s*Math.min(l,1-l);return 255*(l-a*Math.max(-1,Math.min(k-3,9-k,1)))};return [f(0),f(8),f(4)].map(Math.round)}
-function setAccent(hex){
+function setAccent(hex){hex="";
   const r=document.documentElement,st=r.style;
   if(!/^#[0-9a-f]{6}$/i.test(hex||"")){["--tint","--tintd","--wp"].forEach(k=>st.removeProperty(k));r.classList.remove("wpc");return}
   const [h,s0,l]=rgb2hsl(...[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16))),s=Math.max(s0,.62);

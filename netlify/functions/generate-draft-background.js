@@ -25,22 +25,7 @@ Gunakan teks biasa tanpa tanda markdown.`;
 const SCRIPT = `TUGAS: tulis script episode lengkap dari hook sampai ending berdasarkan ide yang sudah disetujui pengguna (ikuti idenya, jangan diganti).\n${OUT}`;
 const REVISE = `TUGAS: revisi script saat ini sesuai instruksi pengguna. Ubah hanya yang diminta dan pertahankan bagian lain. Tetap patuhi aturan di atas.\n${OUT}`;
 
-async function callModel(provider, model, maxTokens, prompt) {
-  if (provider === "openai") {
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + process.env.OPENAI_API_KEY },
-      body: JSON.stringify({ model, max_tokens: maxTokens, response_format: { type: "json_object" }, messages: [{ role: "user", content: prompt }] }),
-    });
-    if (!r.ok) throw new Error(`OpenAI menolak permintaan (HTTP ${r.status}).`);
-    return (await r.json()).choices?.[0]?.message?.content;
-  }
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-    method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", maxOutputTokens: maxTokens } }),
-  });
-  if (!r.ok) throw new Error(`Gemini menolak permintaan (HTTP ${r.status}). Periksa API key dan nama model.`);
-  return (await r.json()).candidates?.[0]?.content?.parts?.map((p) => p.text).join("");
-}
+const { generate } = require("../lib/ai.js");
 
 exports.handler = async (event) => {
   const auth = event.headers.authorization || "";
@@ -61,15 +46,12 @@ exports.handler = async (event) => {
     const prev = await rest(`episodes?project_id=eq.${d.project_id}&order=number.desc&limit=5&select=number,title,summary,main_conflict,key_events,new_info,relationship_changes,unpaid_promises,cliffhanger`);
     const ins = await rest(`insights?project_id=eq.${d.project_id}&active=eq.true&order=created_at.desc&limit=10&select=teks,rekomendasi,keyakinan,status`).catch(() => []);
     const [st] = await rest(`ai_provider_settings?project_id=eq.${d.project_id}&select=*`);
-    const provider = st?.default_provider || "gemini";
-    if (!process.env[provider === "openai" ? "OPENAI_API_KEY" : "GEMINI_API_KEY"]) throw new Error("API key belum diisi di Environment variables Netlify.");
-    const model = (provider === "openai" ? st?.model_openai : st?.model_gemini) || (provider === "openai" ? "gpt-4o-mini" : "gemini-flash-latest");
     const ctx = `DATA BRAND DNA (kosong berarti belum ditentukan):\n${JSON.stringify(clean(br?.data))}\n\nTOKOH YANG TAMPIL:\n${JSON.stringify(chars.map(clean))}\n\n5 EPISODE TERAKHIR (terbaru dulu, bisa kosong jika ini episode pertama):\n${JSON.stringify(prev.map(clean))}\n\nPEMBELAJARAN DARI ANALISIS PERFORMA (aktif, bisa kosong):\n${JSON.stringify(ins)}\n\nARAH DARI PENGGUNA (opsional): ${d.params?.note || "-"}`;
     const idea = `\n\nIDE YANG DISETUJUI PENGGUNA:\n${JSON.stringify(d.chosen)}`;
     const prompt = mode === "ideas" ? `${BASE}\n${IDEAS}\n\n${ctx}`
       : mode === "script" ? `${BASE}\n${SCRIPT}\n\n${ctx}${idea}`
       : `${BASE}\n${REVISE}\n\n${ctx}${idea}\n\nSCRIPT SAAT INI:\n${JSON.stringify(d.script)}\n\nINSTRUKSI REVISI DARI PENGGUNA:\n${d.instruction}`;
-    const raw = await callModel(provider, model, Math.max(st?.max_output_tokens || 0, mode === "ideas" ? 6000 : 12000), prompt);
+    const { text: raw, provider, model } = await generate(st, Math.max(st?.max_output_tokens || 0, mode === "ideas" ? 6000 : 12000), prompt);
     if (!raw) throw new Error("AI tidak mengembalikan teks.");
     let c; try { c = JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, "")); } catch { throw new Error("Respons AI terpotong atau bukan JSON. Naikkan batas output di Pengaturan lalu coba lagi."); }
     if (mode === "ideas") {

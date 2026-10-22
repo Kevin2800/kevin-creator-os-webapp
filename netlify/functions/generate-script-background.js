@@ -19,22 +19,7 @@ Keluarkan JSON dengan 4 kunci bertipe string:
 "asumsi": daftar asumsi dan hal yang belum ditentukan, satu per baris.
 Gunakan teks biasa tanpa tanda markdown.`;
 
-async function callModel(provider, model, maxTokens, prompt) {
-  if (provider === "openai") {
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + process.env.OPENAI_API_KEY },
-      body: JSON.stringify({ model, max_tokens: maxTokens, response_format: { type: "json_object" }, messages: [{ role: "user", content: prompt }] }),
-    });
-    if (!r.ok) throw new Error(`OpenAI menolak permintaan (HTTP ${r.status}).`);
-    return (await r.json()).choices?.[0]?.message?.content;
-  }
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-    method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", maxOutputTokens: maxTokens } }),
-  });
-  if (!r.ok) throw new Error(`Gemini menolak permintaan (HTTP ${r.status}). Periksa API key dan nama model.`);
-  return (await r.json()).candidates?.[0]?.content?.parts?.map((p) => p.text).join("");
-}
+const { generate } = require("../lib/ai.js");
 
 exports.handler = async (event) => {
   const auth = event.headers.authorization || "";
@@ -54,9 +39,6 @@ exports.handler = async (event) => {
     const chars = await rest(`characters?project_id=eq.${v.project_id}&status=eq.aktif&select=*`);
     const prev = await rest(`episodes?project_id=eq.${v.project_id}&number=lt.${ep.number}&order=number.desc&limit=5&select=number,title,summary,main_conflict,key_events,new_info,relationship_changes,unpaid_promises,cliffhanger`);
     const [st] = await rest(`ai_provider_settings?project_id=eq.${v.project_id}&select=*`);
-    const provider = st?.default_provider || "gemini";
-    if (!process.env[provider === "openai" ? "OPENAI_API_KEY" : "GEMINI_API_KEY"]) throw new Error("API key belum diisi di Environment variables Netlify.");
-    const model = (provider === "openai" ? st?.model_openai : st?.model_gemini) || (provider === "openai" ? "gpt-4o-mini" : "gemini-flash-latest");
     const maxTokens = Math.max(st?.max_output_tokens || 0, 8192);
     const prompt = `${RULES}
 
@@ -74,7 +56,7 @@ ${JSON.stringify(clean(ep))}
 
 PARAMETER PRODUKSI DARI PENGGUNA:
 ${JSON.stringify(clean(v.params))}`;
-    const raw = await callModel(provider, model, maxTokens, prompt);
+    const { text: raw, provider, model } = await generate(st, maxTokens, prompt);
     if (!raw) throw new Error("AI tidak mengembalikan teks.");
     let c; try { c = JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, "")); } catch { throw new Error("Respons AI terpotong atau bukan JSON. Naikkan batas output di Pengaturan lalu coba lagi."); }
     await patch({ status: "selesai", error: null, content: { script: c.script, arahan_teknis: c.arahan_teknis, paket_publikasi: c.paket_publikasi, asumsi: c.asumsi, model: `${provider}:${model}` } });
