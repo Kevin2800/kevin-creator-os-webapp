@@ -16,7 +16,7 @@ Keluarkan JSON dengan kunci:
 "ringkasan" (string), "menonjol" (array string), "berjalan_baik" (array), "perlu_diperbaiki" (array; tiap item menyebut bagian script, apa yang kurang, dan saran konkret), "kemungkinan_penyebab" (array; tiap item diawali "Hipotesis:"), "perbandingan" (string), "keyakinan" (objek {"tingkat":"rendah|sedang|tinggi","alasan":string}), "eksperimen" (array untuk video berikutnya), "jangan_diubah" (array hal yang belum cukup bukti untuk diubah), "insights" (array maksimal 5 objek {"teks","keyakinan":"rendah|sedang|tinggi","rekomendasi","status":"hipotesis"}; ringkas dan siap dipakai saat menulis script berikutnya).
 Gunakan teks biasa tanpa markdown.`;
 
-const { generate } = require("../lib/ai.js");
+const { generate, parseJSON } = require("../lib/ai.js");
 
 exports.handler = async (event) => {
   const auth = event.headers.authorization || "";
@@ -56,9 +56,7 @@ Catatan pengguna: ${sn.notes || "-"}
 
 VIDEO LAIN DENGAN PERIODE UKUR YANG SAMA (untuk perbandingan; kosong jika belum ada):
 ${JSON.stringify(others.map((o) => ({ episode: titles[o.episode_id], data: readable(o.metrics) })))}`;
-    const { text: raw, provider, model } = await generate(st, Math.max(st?.max_output_tokens || 0, 8192), prompt);
-    if (!raw) throw new Error("AI tidak mengembalikan teks.");
-    let c; try { c = JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, "")); } catch { throw new Error("Respons AI terpotong atau bukan JSON. Naikkan batas output di Pengaturan lalu coba lagi."); }
+    const { data: c, provider, model } = await generate(st, Math.max(st?.max_output_tokens || 0, 8192), prompt, parseJSON);
     await rest(`insights?snapshot_id=eq.${id}`, { method: "DELETE" });
     const ins = (Array.isArray(c.insights) ? c.insights : []).slice(0, 5).filter((i) => i && i.teks).map((i) => ({ project_id: sn.project_id, episode_id: sn.episode_id, snapshot_id: id, teks: String(i.teks), rekomendasi: i.rekomendasi ? String(i.rekomendasi) : null, keyakinan: ["rendah", "sedang", "tinggi"].includes(i.keyakinan) ? i.keyakinan : "rendah", status: "hipotesis" }));
     if (ins.length) await rest("insights", { method: "POST", body: JSON.stringify(ins) });

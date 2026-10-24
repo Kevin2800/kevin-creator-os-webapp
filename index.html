@@ -309,9 +309,11 @@ const vtabs=TB=>`<div class="vt">${Object.entries(TB).map(([k,l])=>`<button clas
 
 /* ===== layar ===== */
 const PROV=[
- {id:"gemini",name:"Gemini",env:"GEMINI_API_KEY",model:"gemini-flash-latest",tag:"Ada paket gratis"},
+ {id:"gemini",name:"Gemini",env:"GEMINI_API_KEY",model:"gemini-flash-latest",tag:"Gratis, batas harian kecil"},
+ {id:"cerebras",name:"Cerebras",env:"CEREBRAS_API_KEY",model:"gpt-oss-120b",tag:"Ada paket gratis, 1 juta token/hari"},
  {id:"groq",name:"Groq",env:"GROQ_API_KEY",model:"llama-3.3-70b-versatile",tag:"Ada paket gratis"},
  {id:"openrouter",name:"OpenRouter",env:"OPENROUTER_API_KEY",model:"openrouter/free",tag:"Ada model gratis (:free)"},
+ {id:"maia",name:"MAIA Router",env:"MAIA_API_KEY",model:"maia/gemini-2.5-flash",tag:"Router berbayar/kredit, cek paket di maiarouter.ai"},
  {id:"mistral",name:"Mistral",env:"MISTRAL_API_KEY",model:"mistral-small-latest",tag:"Ada paket gratis terbatas"},
  {id:"deepseek",name:"DeepSeek",env:"DEEPSEEK_API_KEY",model:"deepseek-chat",tag:"Berbayar, murah"},
  {id:"openai",name:"OpenAI",env:"OPENAI_API_KEY",model:"gpt-4o-mini",tag:"Berbayar"},

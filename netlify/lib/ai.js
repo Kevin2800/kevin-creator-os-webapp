@@ -5,7 +5,9 @@ const PROVIDERS = {
   anthropic: { label: "Claude (Anthropic)", env: "ANTHROPIC_API_KEY", model: "claude-haiku-5-5", kind: "anthropic" },
   deepseek: { label: "DeepSeek", env: "DEEPSEEK_API_KEY", model: "deepseek-chat", kind: "openai", base: "https://api.deepseek.com/v1" },
   groq: { label: "Groq", env: "GROQ_API_KEY", model: "llama-3.3-70b-versatile", kind: "openai", base: "https://api.groq.com/openai/v1" },
+  cerebras: { label: "Cerebras", env: "CEREBRAS_API_KEY", model: "gpt-oss-120b", kind: "openai", base: "https://api.cerebras.ai/v1" },
   openrouter: { label: "OpenRouter", env: "OPENROUTER_API_KEY", model: "openrouter/free", kind: "openai", base: "https://openrouter.ai/api/v1", json: false },
+  maia: { label: "MAIA Router", env: "MAIA_API_KEY", model: "maia/gemini-2.5-flash", kind: "openai", base: "https://api.maiarouter.ai/v1" },
   mistral: { label: "Mistral", env: "MISTRAL_API_KEY", model: "mistral-small-latest", kind: "openai", base: "https://api.mistral.ai/v1" },
 };
 const JSON_HINT = "Balas HANYA dengan satu objek JSON yang valid, tanpa teks lain dan tanpa blok markdown.";
@@ -26,6 +28,19 @@ function fail(P, status, body) {
   const e = new Error(msg.trim()); e.status = status; e.transient = transient; return e;
 }
 
+function cut(P, maxTokens) {
+  const e = new Error(`${P.label}: jawaban terpotong karena batas output (${maxTokens} token). Naikkan Batas output di Pengaturan.`);
+  e.transient = false; return e;
+}
+
+function parseJSON(raw) {
+  const t = String(raw || "").trim().replace(/^```(?:json)?\s*|\s*```$/g, "");
+  try { return JSON.parse(t); } catch {}
+  const a = t.indexOf("{"), b = t.lastIndexOf("}");
+  if (a >= 0 && b > a) { try { return JSON.parse(t.slice(a, b + 1)); } catch {} }
+  throw new Error("bukan JSON");
+}
+
 async function post(P, url, headers, body) {
   let r;
   try { r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify(body) }); }
@@ -40,16 +55,20 @@ async function call(id, model, maxTokens, prompt) {
     const r = await post(P, `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { "x-goog-api-key": key },
       { contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", maxOutputTokens: maxTokens } });
     if (!r.ok) throw fail(P, r.status, r.text);
-    return JSON.parse(r.text).candidates?.[0]?.content?.parts?.map((p) => p.text).join("");
+    const j = JSON.parse(r.text), cand = j.candidates?.[0];
+    if (cand?.finishReason === "MAX_TOKENS") throw cut(P, maxTokens);
+    return cand?.content?.parts?.map((p) => p.text).join("");
   }
   if (P.kind === "anthropic") {
     const r = await post(P, "https://api.anthropic.com/v1/messages", { "x-api-key": key, "anthropic-version": "2023-06-01" },
       { model, max_tokens: maxTokens, system: JSON_HINT, messages: [{ role: "user", content: prompt }] });
     if (!r.ok) throw fail(P, r.status, r.text);
-    return (JSON.parse(r.text).content || []).filter((c) => c.type === "text").map((c) => c.text).join("");
+    const j = JSON.parse(r.text);
+    if (j.stop_reason === "max_tokens") throw cut(P, maxTokens);
+    return (j.content || []).filter((c) => c.type === "text").map((c) => c.text).join("");
   }
   // OpenAI dan yang kompatibel (DeepSeek, Groq, OpenRouter, Mistral)
-  const newStyle = id === "openai" && /^(gpt-5|o\d)/.test(model);
+  const newStyle = id === "cerebras" || (id === "openai" && /^(gpt-[5-9]|o\d)/.test(model));
   const mk = (useJson) => ({
     model, messages: [{ role: "user", content: useJson ? prompt : prompt + "\n\n" + JSON_HINT }],
     [newStyle ? "max_completion_tokens" : "max_tokens"]: maxTokens,
@@ -59,7 +78,9 @@ async function call(id, model, maxTokens, prompt) {
   let r = await post(P, P.base + "/chat/completions", headers, mk(P.json !== false));
   if (!r.ok && r.status === 400 && P.json !== false) r = await post(P, P.base + "/chat/completions", headers, mk(false));
   if (!r.ok) throw fail(P, r.status, r.text);
-  return JSON.parse(r.text).choices?.[0]?.message?.content;
+  const ch = JSON.parse(r.text).choices?.[0];
+  if (ch?.finish_reason === "length") throw cut(P, maxTokens);
+  return ch?.message?.content;
 }
 
 function pickModel(st, id) {
@@ -68,7 +89,7 @@ function pickModel(st, id) {
 }
 
 // Coba provider utama (retry 3x untuk error sementara), lalu provider cadangan bila ada.
-async function generate(st, maxTokens, prompt) {
+async function generate(st, maxTokens, prompt, parse) {
   const primary = st?.default_provider || "gemini", fb = st?.models?._fallback;
   const chain = [primary]; if (fb && fb !== primary) chain.push(fb);
   let last;
@@ -77,11 +98,17 @@ async function generate(st, maxTokens, prompt) {
     if (!process.env[PROVIDERS[id].env]) { last = new Error(`API key ${PROVIDERS[id].label} belum diisi di Environment variables Netlify (${PROVIDERS[id].env}).`); continue; }
     const model = pickModel(st, id);
     for (let i = 0; i < 3; i++) {
-      try { const text = await call(id, model, maxTokens, prompt); if (text) return { text, provider: id, model }; last = new Error(`${PROVIDERS[id].label}: tidak mengembalikan teks.`); break; }
+      try {
+        const text = await call(id, model, maxTokens, prompt);
+        if (!text) { last = new Error(`${PROVIDERS[id].label}: tidak mengembalikan teks.`); break; }
+        if (!parse) return { text, provider: id, model };
+        try { return { text, data: parse(text), provider: id, model }; }
+        catch { last = new Error(`${PROVIDERS[id].label}: jawaban bukan JSON yang valid (model ${model}). Coba model lain atau naikkan Batas output.`); break; }
+      }
       catch (e) { last = e; if (!e.transient || i === 2) break; await sleep(i === 0 ? 3000 : 8000); }
     }
   }
   throw last || new Error("Tidak ada provider AI yang siap dipakai.");
 }
 
-module.exports = { PROVIDERS, generate, pickModel };
+module.exports = { PROVIDERS, generate, pickModel, parseJSON };

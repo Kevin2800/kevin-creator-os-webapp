@@ -19,7 +19,7 @@ Keluarkan JSON dengan 4 kunci bertipe string:
 "asumsi": daftar asumsi dan hal yang belum ditentukan, satu per baris.
 Gunakan teks biasa tanpa tanda markdown.`;
 
-const { generate } = require("../lib/ai.js");
+const { generate, parseJSON } = require("../lib/ai.js");
 
 exports.handler = async (event) => {
   const auth = event.headers.authorization || "";
@@ -56,9 +56,7 @@ ${JSON.stringify(clean(ep))}
 
 PARAMETER PRODUKSI DARI PENGGUNA:
 ${JSON.stringify(clean(v.params))}`;
-    const { text: raw, provider, model } = await generate(st, maxTokens, prompt);
-    if (!raw) throw new Error("AI tidak mengembalikan teks.");
-    let c; try { c = JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, "")); } catch { throw new Error("Respons AI terpotong atau bukan JSON. Naikkan batas output di Pengaturan lalu coba lagi."); }
+    const { data: c, provider, model } = await generate(st, maxTokens, prompt, parseJSON);
     await patch({ status: "selesai", error: null, content: { script: c.script, arahan_teknis: c.arahan_teknis, paket_publikasi: c.paket_publikasi, asumsi: c.asumsi, model: `${provider}:${model}` } });
   } catch (e) {
     await patch({ status: "gagal", error: String(e.message || e).slice(0, 300) }).catch(() => {});

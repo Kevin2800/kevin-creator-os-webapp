@@ -25,7 +25,7 @@ Gunakan teks biasa tanpa tanda markdown.`;
 const SCRIPT = `TUGAS: tulis script episode lengkap dari hook sampai ending berdasarkan ide yang sudah disetujui pengguna (ikuti idenya, jangan diganti).\n${OUT}`;
 const REVISE = `TUGAS: revisi script saat ini sesuai instruksi pengguna. Ubah hanya yang diminta dan pertahankan bagian lain. Tetap patuhi aturan di atas.\n${OUT}`;
 
-const { generate } = require("../lib/ai.js");
+const { generate, parseJSON } = require("../lib/ai.js");
 
 exports.handler = async (event) => {
   const auth = event.headers.authorization || "";
@@ -51,9 +51,7 @@ exports.handler = async (event) => {
     const prompt = mode === "ideas" ? `${BASE}\n${IDEAS}\n\n${ctx}`
       : mode === "script" ? `${BASE}\n${SCRIPT}\n\n${ctx}${idea}`
       : `${BASE}\n${REVISE}\n\n${ctx}${idea}\n\nSCRIPT SAAT INI:\n${JSON.stringify(d.script)}\n\nINSTRUKSI REVISI DARI PENGGUNA:\n${d.instruction}`;
-    const { text: raw, provider, model } = await generate(st, Math.max(st?.max_output_tokens || 0, mode === "ideas" ? 6000 : 12000), prompt);
-    if (!raw) throw new Error("AI tidak mengembalikan teks.");
-    let c; try { c = JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, "")); } catch { throw new Error("Respons AI terpotong atau bukan JSON. Naikkan batas output di Pengaturan lalu coba lagi."); }
+    const { data: c, provider, model } = await generate(st, Math.max(st?.max_output_tokens || 0, mode === "ideas" ? 6000 : 12000), prompt, parseJSON);
     if (mode === "ideas") {
       if (!Array.isArray(c.ideas) || !c.ideas.length) throw new Error("AI tidak memberi ide. Coba lagi.");
       return await patch({ status: "ide_siap", ideas: c.ideas.slice(0, 3), chosen: null, error: null });
