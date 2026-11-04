@@ -8,6 +8,7 @@ const PROVIDERS = {
   cerebras: { label: "Cerebras", env: "CEREBRAS_API_KEY", model: "gpt-oss-120b", kind: "openai", base: "https://api.cerebras.ai/v1" },
   openrouter: { label: "OpenRouter", env: "OPENROUTER_API_KEY", model: "openrouter/free", kind: "openai", base: "https://openrouter.ai/api/v1", json: false },
   maia: { label: "MAIA Router", env: "MAIA_API_KEY", model: "maia/gemini-2.5-flash", kind: "openai", base: "https://api.maiarouter.ai/v1" },
+  inferx: { label: "InferX", env: "INFERX_API_KEY", model: "deepseek-v4.1-flash", kind: "openai", base: "https://model.inferx.net/endpoints/v1", json: false },
   mistral: { label: "Mistral", env: "MISTRAL_API_KEY", model: "mistral-small-latest", kind: "openai", base: "https://api.mistral.ai/v1", v: 1 },
 };
 const JSON_HINT = "Balas HANYA dengan satu objek JSON yang valid, tanpa teks lain dan tanpa blok markdown.";
