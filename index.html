@@ -172,6 +172,17 @@ header.n{background:rgba(18,22,27,.72)}
 .rd:active{color:var(--red);background:rgba(255,107,94,.16)}
 .gt{text-shadow:0 1px 8px rgba(0,0,0,.7)}
 .tabs .glass{background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04)),rgba(20,26,32,.6);border-color:rgba(200,176,122,.38)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:0 16px 8px}.cal>em{font-style:normal;text-align:center;font-size:11px;color:var(--mute)}
+.cd{min-height:54px;border-radius:10px;background:var(--gl);border:.5px solid var(--gb);font-size:12px;padding:4px;overflow:hidden}.cd.t{border-color:var(--tint)}.cd b{display:block;font-weight:600;color:var(--mute)}
+.cd i{display:block;font-style:normal;font-size:10.5px;background:var(--tint);color:var(--km-ink);border-radius:6px;padding:1px 4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cm{display:flex;justify-content:space-between;align-items:center;padding:4px 20px 8px}.cm b{font-size:17px}
+/* ===== nyaman mengetik ===== */
+.f{padding:12px 16px 14px;transition:background .2s}
+.f span{font-size:13px;font-weight:500;margin-bottom:4px}
+.f:focus-within{background:rgba(255,255,255,.05)}.f:focus-within span{color:var(--tintd)}
+.f input,.f textarea,.f select{font-size:17px;line-height:1.5;padding:4px 0}
+.f textarea{resize:none;overflow:hidden;min-height:96px}
+.nopad{padding-bottom:calc(40vh + env(safe-area-inset-bottom))!important}
 </style></head><body>
 <div id="pb"></div><div id="bg"></div><div id="app"><div class="empty" id="boot" style="padding-top:30vh">Memuat aplikasi…</div></div><div id="msg" role="alert"></div><svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="lensfx" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feImage id="lensmap" preserveAspectRatio="none" result="m"/><feDisplacementMap in="SourceGraphic" in2="m" scale="34" xChannelSelector="R" yChannelSelector="G"/></filter></svg><nav class="tabs hide" id="tabs"></nav>
 <script>
@@ -191,7 +202,7 @@ const RATES=[["skip_rate","Jumlah lewati (skip)"],["share_rate","Jumlah bagikan"
 const COUNTS=[["views","Tayangan"],["reach","Akun terjangkau"],["avg_watch_sec","Rata-rata waktu tonton","s"],["retention_3s","Masih menonton di detik 3","%"],["profile_visits","Kunjungan profil"],["follows","Follow dari konten"]];
 const PER={"24j":"24 jam","48j":"48 jam","7h":"7 hari",custom:"Custom"},CMP={lebih_rendah:"Lebih rendah",lebih_tinggi:"Lebih tinggi"};
 const TABS=[["brand","Brand",'<path d="M12 3l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L12 16.9 6.4 20.1l1.4-6.3L3 9.5l6.4-.6z"/>'],["char","Karakter",'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.5 0 4.5 1.8 4.5 5"/>'],["eps","Episode",'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4.5-2.5z"/>'],["ana","Analisis",'<path d="M6 20v-7M12 20V5M18 20v-10"/>'],["ai","Pengaturan",'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/>']];
-let user,pid,tab="brand",stack=[],vtab="script";
+let user,pid,tab="brand",stack=[],vtab="script",epv="list",cm=new Date(),dper="24j",dmet="views";
 const cur=()=>stack[stack.length-1];
 let hdepth=0;
 function nav(s){stack.push(s);hdepth++;history.pushState({n:hdepth},"");render(1)}
@@ -340,7 +351,7 @@ const roots={
   [e,sn,ins].forEach(chk);
   const ST={menunggu:"Menganalisis…",selesai:"Sudah dianalisis",gagal:"Analisis gagal"};
   const act=ins.data.filter(x=>x.active).length;
-  const top=`<div class="grp" style="margin:0 16px 8px"><div class="c tap ch" data-act="open" data-t="insights"><span>Pembelajaran untuk script berikutnya<small class="sub">${act} aktif · otomatis dipakai AI saat membuat ide dan script</small></span></div></div>`;
+  const top=`<div class="grp" style="margin:0 16px 8px"><div class="c tap ch" data-act="open" data-t="dash"><span>Evaluasi performa konten<small class="sub">Ranking, rata-rata, dan perbandingan antar episode</small></span></div></div><div class="grp" style="margin:0 16px 8px"><div class="c tap ch" data-act="open" data-t="insights"><span>Pembelajaran untuk script berikutnya<small class="sub">${act} aktif · otomatis dipakai AI saat membuat ide dan script</small></span></div></div>`;
   return {title:"Analisis",search:1,body:top+(e.data.length?e.data.map(x=>{const m=sn.data.filter(y=>y.episode_id===x.id);return `<div class="row" data-act="open" data-t="anaep" data-id="${x.id}">${av(x.title,"EP"+x.number)}<div class="mid"><div><b>${esc(x.title)}</b><small>${m.length?m.length+" data performa":"Belum ada data performa"}</small></div><span class="pill">${m.length?ST[m[0].analysis_status]:""}</span></div></div>`}).join(""):`<div class="empty">Belum ada episode yang disetujui.<br>Setujui script di tab Episode dulu, lalu isi data performanya di sini.</div>`)};
  },
  async ai(){
@@ -388,6 +399,7 @@ const pushed={
   const rate=([k,l])=>`<div class="f"><span>${l} (%)</span><div style="display:flex;gap:8px"><input name="${k}" inputmode="decimal" placeholder="mis. 3,6" style="flex:1"><select name="${k}_cmp" style="width:auto;max-width:50%"><option value="">Pembanding IG</option><option value="lebih_rendah">Lebih rendah</option><option value="lebih_tinggi">Lebih tinggi</option></select></div></div>`;
   const num=([k,l,u])=>`<label class="f"><span>${l}${u==="%"?" (%)":u==="s"?"":""}</span><input name="${k}" inputmode="decimal"></label>`;
   return {title:"Data performa",save:1,body:`<p class="sub" style="padding:0 16px;white-space:normal">EP${e.number} · ${esc(e.title)}. Salin angka dari Instagram Insights. Kosongkan yang tidak tersedia (kosong tidak dianggap nol).</p>
+  <div class="grp" style="margin-top:12px"><label class="c tap"><span>📷 Baca otomatis dari screenshot atau rekaman layar<small class="sub" id="xs">Pilih 1–4 screenshot Insights, atau 1 rekaman layar. AI mengisi form di bawah; cek dulu sebelum Simpan.</small></span><input type="file" id="xfile" accept="image/*,video/*" multiple hidden></label></div>
   <form id="f" data-form="snap" data-ep="${e.id}">
   <div class="grp" style="margin-top:12px">${sel("Periode pengukuran","period",PER,"24j")}<label class="f"><span>Waktu pengambilan data</span><input type="datetime-local" name="measured_at" value="${loc}"></label><label class="f"><span>Sumber data</span><input name="source" value="Instagram Insights (manual)"></label></div>
   <div class="gt">Rate dari Instagram (urut sesuai layar Insights)</div><div class="grp">${RATES.map(rate).join("")}</div>
@@ -472,7 +484,7 @@ const pushed={
   let nx=1;if(!s.id){const {data:m}=chk(await sb.from("episodes").select("number").order("number",{ascending:false}).limit(1));nx=(m[0]?.number||0)+1}
   return {title:e.number?"EP"+e.number:"Episode baru",save:1,body:`<form id="f" data-form="eps"><input type="hidden" name="id" value="${e.id||""}"><div class="grp" style="margin-top:16px">
   <label class="f"><span>Nomor episode</span><input name="number" type="number" min="1" required value="${e.number??nx}"></label>
-  <label class="f"><span>Judul (wajib)</span><input name="title" required value="${esc(e.title)}"></label>${sel("Status","status",ES,e.status||"idea")}${E.map(f=>fld(f,e[f[0]])).join("")}</div></form>
+  <label class="f"><span>Judul (wajib)</span><input name="title" required value="${esc(e.title)}"></label>${sel("Status","status",ES,e.status||"idea")}${E.map(f=>fld(f,e[f[0]])).join("")}<label class="f"><span>Tanggal tayang</span><input type="date" name="publish_date" value="${esc(e.publish_date)}"></label><label class="f"><span>PIC / penanggung jawab</span><input name="assignee" value="${esc(e.assignee)}"></label></div></form>
   ${e.id?`<div class="grp" style="margin-top:20px"><div class="c tap ch" data-act="open" data-t="studio" data-id="${e.id}"><span>✨ Script AI<small class="sub">Naskah, shot list, dan paket publikasi</small></span></div></div><div class="grp" style="margin-top:20px"><div class="c tap" data-act="del" data-tb="episodes" data-id="${e.id}" data-n="EP${e.number}"><span class="red">Hapus episode</span></div></div>`:""}`};
  }
 };
@@ -562,6 +574,101 @@ async function runGen(id){
   }
 }
 {const _d=pushed.draft;pushed.draft=async function(s){const r=await _d.call(pushed,s);r.body+=`<div class="grp" style="margin-top:20px"><div class="c tap" data-act="del" data-tb="drafts" data-id="${s.id}" data-n="draf ini"><span class="red">Hapus draf</span></div></div>`;return r}}
+
+/* ===== Socilift: baca screenshot, kalender planner, evaluasi performa ===== */
+async function vframes(file){
+ const url=URL.createObjectURL(file),v=document.createElement("video");v.muted=true;v.playsInline=true;v.src=url;
+ await new Promise((ok,no)=>{v.onloadedmetadata=ok;v.onerror=()=>no(new Error("Video tidak bisa dibaca."))});
+ const d=isFinite(v.duration)?v.duration:10,k=Math.min(1,1080/Math.max(v.videoWidth,v.videoHeight)),c=document.createElement("canvas"),out=[];
+ c.width=Math.round(v.videoWidth*k);c.height=Math.round(v.videoHeight*k);
+ for(let i=0;i<5;i++){v.currentTime=d*(i+.5)/5;await new Promise(r=>v.onseeked=r);c.getContext("2d").drawImage(v,0,0,c.width,c.height);out.push(c.toDataURL("image/jpeg",.7))}
+ URL.revokeObjectURL(url);return out;
+}
+function fillSnap(f,r){
+ let n=0;const set=(k,v)=>{const el=f.elements[k];if(el&&v!==null&&v!==undefined&&v!==""){el.value=String(v).replace(".",",");n++}};
+ [...RATES,...COUNTS].forEach(([k])=>{set(k,r[k]);if(r[k+"_cmp"])set(k+"_cmp",r[k+"_cmp"])});
+ set("retention_note",r.retention_note);if(r.period&&PER[r.period])f.elements.period.value=r.period;
+ f.elements.source.value="Instagram Insights (screenshot, dibaca AI)";if(r.catatan)set("notes","AI: "+r.catatan);
+ toast(n+" kolom terisi otomatis",1);
+}
+async function extractFlow(files){
+ const xs=$("#xs");if(!xs)return;
+ try{
+  xs.textContent="Menyiapkan gambar…";let u=[];
+  for(const x of files)u.push(...(x.type.startsWith("video/")?await vframes(x):[await shrink(x)]));
+  u=u.slice(0,6);const {data:{session}}=await sb.auth.getSession();
+  const id=chk(await sb.from("extractions").insert({project_id:pid,images:u.map(s=>({mime:"image/jpeg",b64:s.split(",")[1]}))}).select("id").single()).data.id;
+  xs.textContent="AI membaca angka…";
+  const r=await fetch("/.netlify/functions/extract-metrics-background",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify({extraction_id:id})});
+  if(!r.ok)throw new Error("Fungsi server tidak dapat dijalankan (HTTP "+r.status+"). Pastikan deploy lewat Netlify.");
+  for(let i=0;i<40;i++){
+   await new Promise(r=>setTimeout(r,2500));
+   const {data:x}=chk(await sb.from("extractions").select("status,result,error").eq("id",id).single());
+   if(x.status==="selesai"){const f=$("#f");if(f)fillSnap(f,x.result);await sb.from("extractions").delete().eq("id",id);const s=$("#xs");if(s)s.textContent="Selesai. Cek angkanya, perbaiki yang salah, lalu Simpan.";return}
+   if(x.status==="gagal")throw new Error(x.error||"Gagal membaca gambar.");
+  }
+  throw new Error("Waktu habis. Coba lagi.");
+ }catch(e){const s=$("#xs");if(s)s.textContent=e.message;toast(e.message)}
+}
+{const _e=roots.eps;roots.eps=async function(){
+ const r=await _e.call(roots),tg=`<div class="vt">${[["list","Daftar"],["cal","Kalender"]].map(([k,l])=>`<button class="link vtb${epv===k?" on":""}" data-act="epv" data-v="${k}">${l}</button>`).join("")}</div>`;
+ const {data:pe}=await sb.from("episodes").select("unpaid_promises");let pn=0;(pe||[]).forEach(e=>String(e.unpaid_promises||"").split(/\r?\n/).forEach(t=>{const x=pline(t);if(x&&!/^✓/.test(x))pn++}));
+ const pc=`<div class="grp" style="margin:0 16px 8px"><div class="c tap ch" data-act="open" data-t="prom"><span>Pelacak janji cerita<small class="sub">${pn} janji belum terbayar</small></span></div></div>`;
+ if(epv!=="cal")return {...r,body:tg+pc+r.body};
+ const {data:l}=chk(await sb.from("episodes").select("id,number,title,status,publish_date,assignee").order("number"));
+ const y=cm.getFullYear(),m=cm.getMonth(),days=new Date(y,m+1,0).getDate(),off=(new Date(y,m,1).getDay()+6)%7,iso=d=>`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`,today=new Date().toISOString().slice(0,10),by={};
+ l.forEach(e=>{if(e.publish_date)(by[e.publish_date]=by[e.publish_date]||[]).push(e)});
+ let g=["Sen","Sel","Rab","Kam","Jum","Sab","Min"].map(x=>`<em>${x}</em>`).join("")+"<div></div>".repeat(off);
+ for(let d=1;d<=days;d++)g+=`<div class="cd${iso(d)===today?" t":""}"><b>${d}</b>${(by[iso(d)]||[]).map(e=>`<i data-act="open" data-t="ep" data-id="${e.id}">EP${e.number}</i>`).join("")}</div>`;
+ const un=l.filter(e=>!e.publish_date&&!["published","analyzed"].includes(e.status));
+ const row=e=>`<div class="row" data-act="open" data-t="ep" data-id="${e.id}">${av(e.title,"EP"+e.number)}<div class="mid"><div><b>${esc(e.title)}</b><small>${e.publish_date?new Date(e.publish_date+"T00:00").toLocaleDateString("id-ID",{day:"numeric",month:"short"})+" · ":""}${esc(e.assignee||"Belum ada PIC")}</small></div><span class="pill">${ES[e.status]}</span></div></div>`;
+ return {...r,search:0,body:tg+pc+`<div class="cm"><button class="link" data-act="cmo" data-v="-1">‹</button><b>${cm.toLocaleDateString("id-ID",{month:"long",year:"numeric"})}</b><button class="link" data-act="cmo" data-v="1">›</button></div><div class="cal">${g}</div>
+ <div class="gt">Belum dijadwalkan (bank ide dan workflow)</div>${un.length?un.map(row).join(""):`<div class="empty">Semua episode sudah terjadwal.</div>`}
+ <p class="sub" style="margin:8px 32px;white-space:normal">Atur tanggal tayang dan PIC di dalam episode.</p>`};
+}}
+pushed.dash=async function(){
+ const [{data:eps},{data:sn}]=(await Promise.all([sb.from("episodes").select("id,number,title"),sb.from("snapshots").select("episode_id,measured_at,metrics").eq("period",dper).order("measured_at",{ascending:false})])).map(chk);
+ const all=[...COUNTS.map(c=>[c[0],c[1],c[2]||""]),...RATES.map(r=>[r[0],r[1],"%"])],cu=all.find(x=>x[0]===dmet),low=dmet==="skip_rate",seen={},rows=[];
+ sn.forEach(s=>{if(seen[s.episode_id])return;seen[s.episode_id]=1;const v=s.metrics?.[dmet],e=eps.find(x=>x.id===s.episode_id);if(e&&v!==undefined)rows.push({e,v:+v})});
+ rows.sort((a,b)=>low?a.v-b.v:b.v-a.v);
+ const mx=Math.max(...rows.map(r=>r.v),1),avg=rows.length?rows.reduce((a,r)=>a+r.v,0)/rows.length:0,f=n=>String(Math.round(n*100)/100).replace(".",",")+cu[2],nm=r=>`EP${r.e.number} ${esc(r.e.title)}`;
+ const btn=(a,k,l,on)=>`<button class="link vtb${on?" on":""}" data-act="${a}" data-v="${k}">${l}</button>`;
+ return {title:"Evaluasi performa",body:`<div class="vt">${[["24j","24 jam"],["48j","48 jam"],["7h","7 hari"]].map(([k,l])=>btn("dper",k,l,k===dper)).join("")}</div><div class="vt">${all.map(x=>btn("dmet",x[0],x[1],x[0]===dmet)).join("")}</div>`+
+ (rows.length?`<div class="gt">Ringkasan · ${cu[1]}</div><div class="grp"><div class="c"><span>Episode terukur</span><b>${rows.length}</b></div><div class="c"><span>Rata-rata</span><b>${f(avg)}</b></div><div class="c"><span>Terbaik<small class="sub">${nm(rows[0])}</small></span><b>${f(rows[0].v)}</b></div><div class="c"><span>Terendah<small class="sub">${nm(rows[rows.length-1])}</small></span><b>${f(rows[rows.length-1].v)}</b></div></div>
+ <div class="gt">Ranking${low?" (lebih rendah lebih baik)":""}</div><div class="grp">${rows.map((r,i)=>`<div class="c tap ch" data-act="open" data-t="anaep" data-id="${r.e.id}"><span>${i+1}. ${nm(r)}<div style="height:6px;border-radius:3px;background:var(--tint);width:${Math.max(4,r.v/mx*100)}%;margin-top:6px"></div></span><b>${f(r.v)}</b></div>`).join("")}</div>
+ <p class="sub" style="margin:8px 32px;white-space:normal">Memakai data terbaru tiap episode pada periode yang sama. Pelajaran dari tiap video otomatis dipakai AI saat membuat script berikutnya.</p>`:`<div class="empty">Belum ada data ${cu[1].toLowerCase()} pada periode ini.<br>Tambahkan data performa di tab Analisis.</div>`)};
+};
+
+/* ===== pelacak janji cerita + cek konsistensi ===== */
+const pline=t=>t.replace(/^\s*[-*•]\s*/,"").trim();
+pushed.prom=async function(){
+ const {data:l}=chk(await sb.from("episodes").select("id,number,title,unpaid_promises").order("number"));
+ const last=Math.max(0,...l.map(e=>e.number)),open=[],paid=[];
+ l.forEach(e=>String(e.unpaid_promises||"").split(/\r?\n/).forEach((t,i)=>{const x=pline(t);if(!x)return;const p=/^✓/.test(x);(p?paid:open).push({e,i,paid:p,t:x.replace(/^✓\s*/,"")})}));
+ open.sort((a,b)=>a.e.number-b.e.number);
+ const age=p=>last-p.e.number,row=p=>`<div class="c tap" data-act="ptog" data-id="${p.e.id}" data-i="${p.i}"><span>${esc(p.t)}<small class="sub">EP${p.e.number} ${esc(p.e.title)}${p.paid?"":" · menggantung "+age(p)+" episode"}</small></span><b style="font-size:13px">${p.paid?"✓ terbayar":age(p)>=3?"⚠️ lama":"belum"}</b></div>`;
+ return {title:"Janji cerita",body:`<p class="sub" style="padding:0 16px;white-space:normal">Diambil dari kolom "Janji cerita yang belum terbayar" tiap episode (satu janji per baris). Ketuk janji untuk menandainya terbayar atau membatalkan tanda.</p>`+
+ (open.length?`<div class="gt">Belum terbayar (${open.length})</div><div class="grp">${open.map(row).join("")}</div>`:`<div class="empty">Tidak ada janji yang menggantung.<br>Isi kolom janji cerita di tiap episode, satu per baris.</div>`)+
+ (paid.length?`<div class="gt">Sudah terbayar (${paid.length})</div><div class="grp">${paid.map(row).join("")}</div>`:"")};
+};
+function consHtml(c,k,id){
+ const btn=t=>`<div class="grp" style="margin-top:20px"><div class="c tap" data-act="cons" data-k="${k}" data-id="${id}"><span>${t}</span></div></div>`;
+ if(!c)return btn(`🔍 Cek konsistensi dengan AI<small class="sub">Rahasia bocor, gaya bicara, kontradiksi, janji cerita</small>`);
+ if(c.status==="menunggu"&&Date.now()-new Date(c.started)>6*60000)c={status:"gagal",error:"Waktu habis. Coba lagi."};
+ if(c.status==="menunggu"){setTimeout(()=>{const s=cur();if(s&&s.id===id)render()},3000);return `<div class="empty">AI memeriksa konsistensi…<br>Biasanya 20–60 detik. Layar diperbarui otomatis.</div>`}
+ if(c.status==="gagal")return `<div class="empty"><span class="red">${esc(c.error||"Gagal.")}</span></div>`+btn("Coba cek lagi");
+ const r=c.result||{},T={tinggi:"🔴 Tinggi",sedang:"🟠 Sedang",rendah:"🟡 Rendah"},V={baik:"✅ Konsisten",perlu_perhatian:"⚠️ Perlu perhatian",bermasalah:"❌ Ada masalah serius"},li=a=>(a||[]).map(x=>"• "+x).join("\n");
+ return `<div class="gt">Cek konsistensi</div><div class="grp"><div class="f"><span>Penilaian</span><b>${V[r.penilaian]||""}</b><div style="margin-top:4px">${esc(r.ringkasan||"")}</div></div>`+
+ ((r.temuan||[]).map(t=>`<div class="f"><span>${T[t.tingkat]||""} · ${esc(t.jenis)}${t.bagian?" · "+esc(t.bagian):""}</span><div>${esc(t.masalah)}</div><div class="sub" style="margin-top:4px;white-space:normal">Saran: ${esc(t.saran)}</div></div>`).join("")||`<div class="f"><span>Temuan</span>Tidak ada masalah ditemukan.</div>`)+
+ (r.janji_terbayar?.length?`<div class="f"><span>Janji cerita yang dibayar script ini</span><div style="white-space:pre-wrap">${esc(li(r.janji_terbayar))}</div></div>`:"")+
+ (r.janji_baru?.length?`<div class="f"><span>Janji cerita baru (catat di kolom janji episode)</span><div style="white-space:pre-wrap">${esc(li(r.janji_baru))}</div></div>`:"")+
+ `</div><p class="sub" style="margin:8px 32px;white-space:normal">Pemeriksaan AI berdasarkan data Anda, bukan kepastian. ${esc(c.model||"")}</p>`+btn("Cek ulang");
+}
+{const add=(name,tb,k)=>{const _o=pushed[name];pushed[name]=async function(s){
+ const r=await _o.call(pushed,s),{data:d}=await sb.from(tb).select(k==="draft"?"consistency,script,status":"consistency,content,status").eq("id",s.id).single();
+ if(!d||!(k==="draft"?d.script&&d.status==="script_siap":d.content&&d.status==="selesai"))return r;
+ r.body+=consHtml(d.consistency,k,s.id);return r}};
+ add("draft","drafts","draft");add("view","script_versions","version")}
 const H={
  async login(f,ev){
   const cred={email:f.elements.email.value.trim(),password:f.elements.password.value};
@@ -588,7 +695,7 @@ const H={
  async eps(f){
   const title=f.elements.title.value.trim(),number=parseInt(f.elements.number.value,10);
   if(!title||!(number>=1))return toast("Judul dan nomor episode (min. 1) wajib diisi.");
-  const row={...collect(f,E),title,number,status:f.elements.status.value,updated_at:now()};
+  const row={...collect(f,E),title,number,status:f.elements.status.value,publish_date:f.elements.publish_date.value||null,assignee:(f.elements.assignee.value||"").trim()||null,updated_at:now()};
   const r=f.elements.id.value?await sb.from("episodes").update(row).eq("id",f.elements.id.value):await sb.from("episodes").insert({...row,project_id:pid});
   if(r.error)return toast(r.error.code==="23505"?"Nomor episode itu sudah dipakai.":r.error.message);
   toast("Episode tersimpan",1);back();
@@ -672,6 +779,23 @@ const A={
  async copy(){await navigator.clipboard.writeText($("#out").dataset.raw);toast("Tersalin",1)},
  async approve(b){if(!confirm("Setujui versi ini sebagai versi final?"))return;chk(await sb.from("script_versions").update({approved:true}).eq("id",b.dataset.id));toast("Versi disetujui",1);render()},
  vtab:b=>{vtab=b.dataset.v;render()},
+ epv:b=>{epv=b.dataset.v;delete cache.eps;render()},
+ cmo:b=>{cm=new Date(cm.getFullYear(),cm.getMonth()+ +b.dataset.v,1);delete cache.eps;render()},
+ dper:b=>{dper=b.dataset.v;render()},
+ async ptog(b){
+  const {data:e}=chk(await sb.from("episodes").select("unpaid_promises").eq("id",b.dataset.id).single());
+  const L=String(e.unpaid_promises||"").split(/\r?\n/),i=+b.dataset.i,t=L[i];
+  L[i]=/^\s*[-*•]?\s*✓/.test(t)?t.replace(/^(\s*[-*•]?\s*)✓\s*/,"$1"):t.replace(/^(\s*[-*•]?\s*)/,"$1✓ ");
+  chk(await sb.from("episodes").update({unpaid_promises:L.join("\n")}).eq("id",b.dataset.id));render()
+ },
+ async cons(b){
+  const tb=b.dataset.k==="draft"?"drafts":"script_versions",id=b.dataset.id,{data:{session}}=await sb.auth.getSession();
+  chk(await sb.from(tb).update({consistency:{status:"menunggu",started:now()}}).eq("id",id));
+  try{const r=await fetch("/.netlify/functions/check-consistency-background",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify({kind:b.dataset.k,id})});if(!r.ok)throw new Error("HTTP "+r.status)}
+  catch(e){await sb.from(tb).update({consistency:{status:"gagal",error:"Fungsi server tidak dapat dijalankan ("+e.message+"). Pastikan deploy lewat Netlify."}}).eq("id",id)}
+  render()
+ },
+ dmet:b=>{dmet=b.dataset.v;render()},
  open:b=>nav({t:b.dataset.t,id:b.dataset.id||null,i:b.dataset.i}),
  back:()=>back(),
  out:async()=>{await sb.auth.signOut();resetNav();loginView()},
@@ -736,7 +860,7 @@ function initFx(){
   const h=document.documentElement,ua=navigator.userAgent,ok=/Chrome\//.test(ua)&&!/iPhone|iPad|iPod/.test(ua);
   if(ok&&fxOn()){try{const m=$("#lensmap");if(!m.getAttribute("href"))m.setAttribute("href",lensMap());h.classList.add("fx")}catch{h.classList.remove("fx")}}else h.classList.remove("fx");
 }
-const INSTANT=new Set(["tab","back","vtab","cancel","edit","unpick","open","wall","fx"]);
+const INSTANT=new Set(["tab","back","vtab","cancel","edit","unpick","open","wall","fx","epv","cmo","dper","dmet"]);
 document.addEventListener("submit",async ev=>{ev.preventDefault();const f=ev.target;if(!H[f.dataset.form])return;
   const btn=ev.submitter||f.querySelector("button.btn")||(f.id&&document.querySelector('button[form="'+f.id+'"]'));
   if(btn&&btn.classList.contains("busy"))return;
@@ -749,6 +873,11 @@ document.addEventListener("change",async ev=>{
   try{const url=await shrink(f),a=await dominant(url).catch(()=>"");localStorage.setItem("kos_wall",JSON.stringify({t:"img",v:url,a}));applyWall();toast("Wallpaper diganti",1);render()}
   catch(e){toast("Foto tidak bisa dipakai: "+(e.name==="QuotaExceededError"?"penyimpanan penuh":"format tidak didukung"))}
 });
+document.addEventListener("change",ev=>{if(ev.target.id!=="xfile")return;const fs=[...ev.target.files];ev.target.value="";if(fs.length)extractFlow(fs)});
+const grow=t=>{t.style.height="auto";t.style.height=Math.max(96,t.scrollHeight)+"px"};
+try{new MutationObserver(()=>document.querySelectorAll(".f textarea").forEach(grow)).observe(document.getElementById("app"),{childList:true,subtree:true})}catch{}
+document.addEventListener("input",ev=>{if(ev.target.matches(".f textarea"))grow(ev.target)});
+document.addEventListener("focusin",ev=>{const t=ev.target;if(t.matches(".f input,.f textarea"))setTimeout(()=>t.scrollIntoView({block:"center",behavior:"smooth"}),350)});
 document.addEventListener("input",ev=>{if(ev.target.id!=="q")return;const q=ev.target.value.toLowerCase();document.querySelectorAll(".row").forEach(r=>r.style.display=r.textContent.toLowerCase().includes(q)?"":"none")});
 async function start(){
   let session=null;

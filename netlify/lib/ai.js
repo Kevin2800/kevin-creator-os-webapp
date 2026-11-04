@@ -1,14 +1,14 @@
 // Pustaka AI bersama: daftar provider, pemanggilan model, retry otomatis, dan provider cadangan.
 const PROVIDERS = {
-  gemini: { label: "Gemini", env: "GEMINI_API_KEY", model: "gemini-flash-latest", kind: "gemini" },
-  openai: { label: "OpenAI", env: "OPENAI_API_KEY", model: "gpt-4o-mini", kind: "openai", base: "https://api.openai.com/v1" },
-  anthropic: { label: "Claude (Anthropic)", env: "ANTHROPIC_API_KEY", model: "claude-haiku-5-5", kind: "anthropic" },
+  gemini: { label: "Gemini", env: "GEMINI_API_KEY", model: "gemini-flash-latest", kind: "gemini", v: 1 },
+  openai: { label: "OpenAI", env: "OPENAI_API_KEY", model: "gpt-4o-mini", kind: "openai", base: "https://api.openai.com/v1", v: 1 },
+  anthropic: { label: "Claude (Anthropic)", env: "ANTHROPIC_API_KEY", model: "claude-haiku-5-5", kind: "anthropic", v: 1 },
   deepseek: { label: "DeepSeek", env: "DEEPSEEK_API_KEY", model: "deepseek-chat", kind: "openai", base: "https://api.deepseek.com/v1" },
   groq: { label: "Groq", env: "GROQ_API_KEY", model: "llama-3.3-70b-versatile", kind: "openai", base: "https://api.groq.com/openai/v1" },
   cerebras: { label: "Cerebras", env: "CEREBRAS_API_KEY", model: "gpt-oss-120b", kind: "openai", base: "https://api.cerebras.ai/v1" },
   openrouter: { label: "OpenRouter", env: "OPENROUTER_API_KEY", model: "openrouter/free", kind: "openai", base: "https://openrouter.ai/api/v1", json: false },
   maia: { label: "MAIA Router", env: "MAIA_API_KEY", model: "maia/gemini-2.5-flash", kind: "openai", base: "https://api.maiarouter.ai/v1" },
-  mistral: { label: "Mistral", env: "MISTRAL_API_KEY", model: "mistral-small-latest", kind: "openai", base: "https://api.mistral.ai/v1" },
+  mistral: { label: "Mistral", env: "MISTRAL_API_KEY", model: "mistral-small-latest", kind: "openai", base: "https://api.mistral.ai/v1", v: 1 },
 };
 const JSON_HINT = "Balas HANYA dengan satu objek JSON yang valid, tanpa teks lain dan tanpa blok markdown.";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -49,11 +49,11 @@ async function post(P, url, headers, body) {
   return { ok: r.ok, status: r.status, text };
 }
 
-async function call(id, model, maxTokens, prompt) {
+async function call(id, model, maxTokens, prompt, images = []) {
   const P = PROVIDERS[id], key = process.env[P.env];
   if (P.kind === "gemini") {
     const r = await post(P, `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { "x-goog-api-key": key },
-      { contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", maxOutputTokens: maxTokens } });
+      { contents: [{ parts: [{ text: prompt }, ...images.map((i) => ({ inline_data: { mime_type: i.mime, data: i.b64 } }))] }], generationConfig: { responseMimeType: "application/json", maxOutputTokens: maxTokens } });
     if (!r.ok) throw fail(P, r.status, r.text);
     const j = JSON.parse(r.text), cand = j.candidates?.[0];
     if (cand?.finishReason === "MAX_TOKENS") throw cut(P, maxTokens);
@@ -61,7 +61,7 @@ async function call(id, model, maxTokens, prompt) {
   }
   if (P.kind === "anthropic") {
     const r = await post(P, "https://api.anthropic.com/v1/messages", { "x-api-key": key, "anthropic-version": "2023-06-01" },
-      { model, max_tokens: maxTokens, system: JSON_HINT, messages: [{ role: "user", content: prompt }] });
+      { model, max_tokens: maxTokens, system: JSON_HINT, messages: [{ role: "user", content: images.length ? [...images.map((i) => ({ type: "image", source: { type: "base64", media_type: i.mime, data: i.b64 } })), { type: "text", text: prompt }] : prompt }] });
     if (!r.ok) throw fail(P, r.status, r.text);
     const j = JSON.parse(r.text);
     if (j.stop_reason === "max_tokens") throw cut(P, maxTokens);
@@ -70,7 +70,7 @@ async function call(id, model, maxTokens, prompt) {
   // OpenAI dan yang kompatibel (DeepSeek, Groq, OpenRouter, Mistral)
   const newStyle = id === "cerebras" || (id === "openai" && /^(gpt-[5-9]|o\d)/.test(model));
   const mk = (useJson) => ({
-    model, messages: [{ role: "user", content: useJson ? prompt : prompt + "\n\n" + JSON_HINT }],
+    model, messages: [{ role: "user", content: images.length ? [{ type: "text", text: useJson ? prompt : prompt + "\n\n" + JSON_HINT }, ...images.map((i) => ({ type: "image_url", image_url: { url: `data:${i.mime};base64,${i.b64}` } }))] : useJson ? prompt : prompt + "\n\n" + JSON_HINT }],
     [newStyle ? "max_completion_tokens" : "max_tokens"]: maxTokens,
     ...(useJson ? { response_format: { type: "json_object" } } : {}),
   });
@@ -89,9 +89,10 @@ function pickModel(st, id) {
 }
 
 // Coba provider utama (retry 3x untuk error sementara), lalu provider cadangan bila ada.
-async function generate(st, maxTokens, prompt, parse) {
+async function generate(st, maxTokens, prompt, parse, images = []) {
   const primary = st?.default_provider || "gemini", fb = st?.models?._fallback;
-  const chain = [primary]; if (fb && fb !== primary) chain.push(fb);
+  let chain = [primary]; if (fb && fb !== primary) chain.push(fb);
+  if (images.length) { chain = chain.filter((id) => PROVIDERS[id]?.v); if (!chain.length) throw new Error("Membaca screenshot butuh provider yang mendukung gambar. Pilih Gemini, OpenAI, Claude, atau Mistral sebagai provider default/cadangan di Pengaturan."); }
   let last;
   for (const id of chain) {
     if (!PROVIDERS[id]) { last = new Error("Provider tidak dikenal: " + id); continue; }
@@ -99,7 +100,7 @@ async function generate(st, maxTokens, prompt, parse) {
     const model = pickModel(st, id);
     for (let i = 0; i < 3; i++) {
       try {
-        const text = await call(id, model, maxTokens, prompt);
+        const text = await call(id, model, maxTokens, prompt, images);
         if (!text) { last = new Error(`${PROVIDERS[id].label}: tidak mengembalikan teks.`); break; }
         if (!parse) return { text, provider: id, model };
         try { return { text, data: parse(text), provider: id, model }; }
