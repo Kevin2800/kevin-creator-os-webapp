@@ -342,9 +342,9 @@ const roots={
   return {title:"Karakter",plus:"char",search:1,body:l.length?l.map(c=>`<div class="row" data-act="open" data-t="char" data-id="${c.id}">${av(c.name)}<div class="mid"><div><b>${esc(c.name)}${c.nickname?` (${esc(c.nickname)})`:""}</b><small>${esc(c.traits||c.actor_name||"Belum ada deskripsi")}</small></div><span class="pill">${CS[c.status]}</span></div></div>`).join(""):`<div class="empty">Belum ada karakter.<br>Ketuk tombol + untuk menambah yang pertama.</div>`};
  },
  async eps(){
-  const [{data:l},{data:dr}]=(await Promise.all([sb.from("episodes").select("id,number,title,summary,status").order("number"),sb.from("drafts").select("id,status,chosen,created_at").neq("status","disetujui").order("created_at",{ascending:false})])).map(chk);
+  const [{data:l},{data:dr}]=(await Promise.all([sb.from("episodes").select("id,number,title,summary,status").order("number"),sb.from("drafts").select("id,status,chosen,created_at,params").neq("status","disetujui").order("created_at",{ascending:false})])).map(chk);
   const DS={ide_menunggu:"AI menyusun ide…",ide_siap:"Pilih ide",script_menunggu:"AI menulis script…",script_siap:"Review script",gagal:"Gagal"};
-  const dh=dr.length?`<div class="gt" style="margin-top:6px">Draf berjalan</div>`+dr.map(x=>`<div class="row" data-act="open" data-t="draft" data-id="${x.id}">${av("Draf","✨")}<div class="mid"><div><b>${esc(x.chosen?.judul||"Draf episode baru")}</b><small>${DS[x.status]}</small></div></div><button class="rd" type="button" aria-label="Hapus draf" data-act="del" data-tb="drafts" data-id="${x.id}" data-n="${esc(x.chosen?.judul||"draf ini")}"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5M10 11v5M14 11v5"/></svg></button></div>`).join("")+`<div class="gt">Episode</div>`:"";
+  const dh=dr.length?`<div class="gt" style="margin-top:6px">Draf berjalan</div>`+dr.map(x=>`<div class="row" data-act="open" data-t="draft" data-id="${x.id}">${av("Draf","✨")}<div class="mid"><div><b>${esc(x.chosen?.judul||"Draf episode baru")}</b><small>${x.params&&x.params.manual?"Menunggu hasil dari AI chat":DS[x.status]}</small></div></div><button class="rd" type="button" aria-label="Hapus draf" data-act="del" data-tb="drafts" data-id="${x.id}" data-n="${esc(x.chosen?.judul||"draf ini")}"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5M10 11v5M14 11v5"/></svg></button></div>`).join("")+`<div class="gt">Episode</div>`:"";
   return {title:"Episode",plus:"newdraft",search:1,body:dh+(l.length?l.map(e=>`<div class="row" data-act="open" data-t="ep" data-id="${e.id}">${av(e.title,"EP"+e.number)}<div class="mid"><div><b>${esc(e.title)}</b><small>${esc(e.summary||"Belum ada ringkasan")}</small></div><span class="pill">${ES[e.status]}</span></div></div>`).join(""):`<div class="empty">Belum ada episode.<br>Ketuk tombol + untuk membuat episode dengan AI.</div>`)};
  },
  async ana(){
@@ -432,11 +432,12 @@ const pushed={
   const {data:l}=chk(await sb.from("characters").select("id,name,nickname").eq("status","aktif").order("created_at"));
   return {title:"Episode baru",body:l.length?`<p class="sub" style="padding:0 16px;white-space:normal">Pilih tokoh yang tampil di episode ini. AI akan memberi 3 ide berdasarkan Brand DNA, profil tokoh, dan episode sebelumnya.</p>
   <form data-form="newdraft"><div class="grp" style="margin-top:12px">${l.map(c=>`<label class="c tap"><span>${esc(c.name)}${c.nickname?` (${esc(c.nickname)})`:""}</span><input type="checkbox" name="ch" value="${c.id}" style="width:22px;height:22px;accent-color:#25d366"></label>`).join("")}</div>
-  <div class="grp" style="margin-top:12px">${fld(["note","Arah atau tema (opsional)",1],"")}</div><button class="btn">Minta 3 ide dari AI</button></form>
+  <div class="grp" style="margin-top:12px">${fld(["note","Arah atau tema (opsional)",1],"")}</div><button class="btn">Minta 3 ide dari AI</button><button type="button" class="btn" style="background:var(--cell);color:var(--tintd);margin-top:0" data-act="mnew">Salin prompt untuk AI chat (manual)</button></form>
   <div class="grp"><div class="c tap ch" data-act="open" data-t="ep"><span>Tambah episode manual<small class="sub">Tanpa AI</small></span></div></div>`:`<div class="empty">Belum ada karakter aktif.<br>Tambahkan karakter dulu di tab Karakter.</div>`};
  },
  async draft(s){
   const d=chk(await sb.from("drafts").select("*").eq("id",s.id).single()).data,T="Draf episode";
+  if(d.params&&d.params.manual)return await pushed.manual({id:d.id,mode:d.params.manual,d});
   if(d.status.endsWith("menunggu")&&Date.now()-new Date(d.updated_at)>6*60000){d.status="gagal";d.error="Waktu habis. Coba lagi."}
   if(d.status.endsWith("menunggu")){setTimeout(()=>{if(cur()&&cur().t==="draft"&&cur().id===s.id)render()},3000);return {title:T,body:`<div class="empty">${d.status==="ide_menunggu"?"AI menyusun 3 ide…":"AI sedang menulis…"}<br>Biasanya 20–60 detik. Layar diperbarui otomatis.</div>`}}
   if(d.status==="gagal")return {title:T,body:`<div class="empty">Gagal.<br><span class="red">${esc(d.error||"Terjadi kesalahan.")}</span></div><button class="btn" data-act="dretry" data-id="${d.id}">Coba lagi</button>`};
@@ -444,19 +445,19 @@ const pushed={
   if(d.status==="ide_siap"&&!d.chosen){
    const R=[["Premis","premis"],["Hook","hook"],["Konflik","konflik"],["Ending","ending"],["Alasan direkomendasikan","alasan"]];
    return {title:"Pilih ide",body:`<p class="sub" style="padding:0 16px;white-space:normal">Skor adalah estimasi AI, bukan prediksi performa.</p>${(d.ideas||[]).map((x,i)=>`<div class="grp" style="margin-top:14px"><div class="f"><span>Ide ${i+1}</span><b>${esc(x.judul)}</b></div>${R.map(([l,k])=>`<div class="f"><span>${l}</span>${esc(x[k])}</div>`).join("")}<div class="f"><span>Skor estimasi (1–10)</span>${Object.entries(x.skor||{}).map(([k,v])=>esc(k.replace(/_/g," "))+" "+esc(v)).join(" · ")}</div><div class="c tap" data-act="pick" data-id="${d.id}" data-i="${i}"><span style="color:var(--tintd);font-weight:600">Pilih dan edit ide ini</span></div></div>`).join("")}
-   <div class="grp" style="margin-top:16px"><div class="c tap" data-act="dnew" data-id="${d.id}"><span>Minta 3 ide baru</span></div></div>`};
+   <div class="grp" style="margin-top:16px"><div class="c tap" data-act="dnew" data-id="${d.id}"><span>Minta 3 ide baru</span></div><div class="c tap" data-act="mgo" data-mode="ideas" data-id="${d.id}"><span>Salin prompt 3 ide baru (AI chat)</span></div></div>`};
   }
   if(d.status==="ide_siap"){
    const F=[["judul","Judul"],["premis","Premis",1],["tema","Tema"],["konflik","Konflik utama",1],["hook","Hook",1],["alur","Perkembangan cerita",1],["ending","Ending",1],["hubungan_episode_lalu","Hubungan dengan episode terdahulu",1]];
    return {title:"Edit ide",body:`<p class="sub" style="padding:0 16px;white-space:normal">Ubah bagian yang kurang cocok. Jika sudah pas, setujui agar AI menulis script lengkap.</p>
    <form data-form="idea" data-id="${d.id}"><div class="grp" style="margin-top:12px">${F.map(f=>fld(f,d.chosen[f[0]])).join("")}</div><button class="btn">Setujui ide dan buat script</button></form>
-   <div class="grp"><div class="c tap" data-act="unpick" data-id="${d.id}"><span>Kembali ke 3 ide</span></div></div>`};
+   <div class="grp"><div class="c tap" data-act="unpick" data-id="${d.id}"><span>Kembali ke 3 ide</span></div><div class="c tap" data-act="mgo" data-mode="script" data-id="${d.id}"><span>Salin prompt script untuk AI chat<small class="sub">Tanpa AI server, hasil ditempel manual</small></span></div></div>`};
   }
   const c=d.script||{},TB={script:"Script",teknis:"Teknis",pub:"Publikasi",asumsi:"Asumsi"};
   let t={script:c.script,teknis:c.arahan_teknis,pub:c.paket_publikasi,asumsi:c.asumsi}[vtab];if(Array.isArray(t))t=t.join("\n");
   return {title:esc(d.chosen?.judul||"Script"),body:`${vtabs(TB)}${fmtOut(t,vtab)}
   <form data-form="rev" data-id="${d.id}"><div class="gt">Chat revisi</div><div class="grp"><label class="f"><span>Perintah ke AI</span><textarea name="ins" rows="2" placeholder="mis. dialog Angel dibuat lebih santai"></textarea></label></div><button class="btn" style="background:var(--cell);color:var(--tintd)">Kirim revisi</button></form>
-  <div class="grp"><div class="c tap" data-act="copy"><span>Salin teks tab ini</span></div><div class="c tap" data-act="dregen" data-id="${d.id}"><span>Tidak cocok, generate ulang</span></div></div>
+  <div class="grp"><div class="c tap" data-act="copy"><span>Salin teks tab ini</span></div><div class="c tap" data-act="dregen" data-id="${d.id}"><span>Tidak cocok, generate ulang</span></div><div class="c tap" data-act="mgo" data-mode="revise" data-id="${d.id}"><span>Revisi lewat AI chat (manual)<small class="sub">Salin prompt, tempel hasil revisi</small></span></div><div class="c tap" data-act="mgo" data-mode="script" data-id="${d.id}"><span>Script ulang lewat AI chat (manual)</span></div></div>
   <button class="btn" data-act="dapprove" data-id="${d.id}">Setujui dan simpan sebagai episode</button>
   <p class="sub" style="margin:0 32px 10px;white-space:normal">${(d.history||[]).length?`${d.history.length} versi sebelumnya tersimpan. `:""}Dibuat oleh ${esc(c.model||"AI")}. Ini saran AI; keputusan akhir ada di Anda.</p>`};
  },
@@ -574,6 +575,79 @@ async function runGen(id){
     await sb.from("script_versions").update({status:"gagal",error:"Fungsi server tidak dapat dijalankan ("+e.message+"). Pastikan deploy lewat GitHub."}).eq("id",id);
   }
 }
+
+/* ===== Mode manual: salin prompt ke AI chat, hasil ditempel sendiri ===== */
+const MBASE=`Kamu adalah creative director, penulis naskah, dan sutradara serial Instagram Reels (vertikal 9:16) berbahasa Indonesia untuk akun @kevin_k.w.
+Aturan:
+- Pakai HANYA data di bawah. Jangan mengarang karakter, fakta, atau episode. Jika informasi penting tidak ada, tulis "belum ditentukan" dan catat sebagai asumsi.
+- Dialog natural, bahasa percakapan Indonesia sesuai gaya bicara tiap karakter. Hindari pidato motivasi dan penjelasan emosi yang sudah terlihat dari aksi.
+- Jangan membocorkan rahasia karakter sebelum waktunya. Jaga konsistensi dengan profil karakter, Brand DNA, dan episode sebelumnya. Jangan ulangi konflik tanpa perkembangan baru.
+- Hook harus dibayar oleh isi cerita (bukan clickbait). Tidak semua episode harus cliffhanger.
+- Produksi realistis (smartphone, tripod, mikrofon, lampu sederhana); beri alternatif bila alat terbatas. Musik hanya yang berlisensi atau bebas royalti.
+- Jangan menyalin karya kreator lain.
+- Jika ada PEMBELAJARAN dari analisis performa, terapkan yang relevan dan jelaskan singkat pengaruhnya: pada tugas ide, sebutkan di kunci "alasan" tiap ide; pada tugas script, tambahkan baris berawalan "Pembelajaran dipakai:" di bagian ASUMSI. Perlakukan pembelajaran berstatus hipotesis sebagai uji coba, bukan kepastian.`;
+const MIDEAS=`TUGAS: usulkan TEPAT 3 ide episode yang berbeda (variasi konflik, hook, dan ending) untuk tokoh terpilih. Jangan hanya mengejar yang paling viral; pertimbangkan konsistensi serial dan identitas brand.
+Keluarkan JSON {"ideas":[...]} berisi 3 objek. Tiap objek punya kunci string: judul, premis, tema, target_audiens, masalah, karakter, konflik, hook, alur, ending, hubungan_episode_lalu, tujuan_awareness, potensi_produksi, alasan; dan kunci "skor" berisi angka 1-10 untuk: relevansi_audiens, kekuatan_hook, potensi_retensi, shareability, orisinalitas, konsistensi_karakter, kesesuaian_brand, kemudahan_produksi. Skor hanya estimasi AI, bukan prediksi performa.
+FORMAT JAWABAN: balas HANYA dengan JSON valid itu, tanpa teks pembuka atau penutup, dan taruh dalam satu blok kode agar mudah disalin.`;
+const MOUT=`FORMAT JAWABAN: teks biasa tanpa tanda markdown, dan taruh SELURUH jawaban dalam satu blok kode agar mudah disalin. Pakai persis 4 penanda ini, masing-masing di baris sendiri:
+=== SCRIPT ===
+(ringkasan produksi singkat: logline, durasi, karakter, lokasi; struktur: hook, konflik, setup, eskalasi, payoff, ending; lalu dialog lengkap. Tiap adegan memakai baris berlabel: TIMESTAMP, LOKASI, SHOT, AKSI, KARAKTER, DIALOG, EKSPRESI, PAUSE, AUDIO, CATATAN SUTRADARA.)
+=== ARAHAN TEKNIS ===
+(shot list: nomor, timestamp, ukuran shot, sudut, posisi dan gerak kamera, blocking, durasi, pencahayaan, audio, transisi; frame rate dan shutter speed, exposure dan white balance, penempatan kamera, arah cahaya, komposisi 9:16, alternatif shot, rencana editing: ritme, subtitle, sound design, color grading, frame pembuka dan penutup.)
+=== PAKET PUBLIKASI ===
+(3 alternatif judul atau opening text, caption, CTA natural, teks cover, kata kunci, hashtag seperlunya, komentar natural untuk dipancing (bukan engagement bait), hipotesis performa.)
+=== ASUMSI ===
+(daftar asumsi dan hal yang belum ditentukan, satu per baris.)`;
+const MSCRIPT=`TUGAS: tulis script episode lengkap dari hook sampai ending berdasarkan ide yang sudah disetujui pengguna (ikuti idenya, jangan diganti).\n${MOUT}`;
+const MREVISE=`TUGAS: revisi script saat ini sesuai instruksi pengguna. Ubah hanya yang diminta dan pertahankan bagian lain. Tetap patuhi aturan di atas.\n${MOUT}`;
+async function mprompt(d,mode){
+  const cl=o=>Object.fromEntries(Object.entries(o||{}).filter(([k,v])=>v&&!["id","project_id","created_at","updated_at"].includes(k)));
+  const ids=d.character_ids||[],P=d.project_id;
+  const [br,ch,pv,ins]=await Promise.all([
+    sb.from("brand_profiles").select("data").eq("project_id",P).limit(1),
+    ids.length?sb.from("characters").select("*").eq("project_id",P).in("id",ids):Promise.resolve({data:[]}),
+    sb.from("episodes").select("number,title,summary,main_conflict,key_events,new_info,relationship_changes,unpaid_promises,cliffhanger").eq("project_id",P).order("number",{ascending:false}).limit(5),
+    sb.from("insights").select("teks,rekomendasi,keyakinan,status").eq("project_id",P).eq("active",true).order("created_at",{ascending:false}).limit(10)]);
+  chk(br);chk(ch);chk(pv);
+  const J=JSON.stringify;
+  const ctx=`DATA BRAND DNA (kosong berarti belum ditentukan):\n${J(cl(br.data&&br.data[0]&&br.data[0].data))}\n\nTOKOH YANG TAMPIL:\n${J((ch.data||[]).map(cl))}\n\n5 EPISODE TERAKHIR (terbaru dulu, bisa kosong jika ini episode pertama):\n${J((pv.data||[]).map(cl))}\n\nPEMBELAJARAN DARI ANALISIS PERFORMA (aktif, bisa kosong):\n${J(ins.data||[])}\n\nARAH DARI PENGGUNA (opsional): ${(d.params&&d.params.note)||"-"}`;
+  const idea=`\n\nIDE YANG DISETUJUI PENGGUNA:\n${J(d.chosen)}`;
+  if(mode==="ideas")return `${MBASE}\n${MIDEAS}\n\n${ctx}`;
+  if(mode==="script")return `${MBASE}\n${MSCRIPT}\n\n${ctx}${idea}`;
+  return `${MBASE}\n${MREVISE}\n\n${ctx}${idea}\n\nSCRIPT SAAT INI:\n${J({...(d.script||{}),model:undefined})}`;
+}
+function mparse(raw){
+  const t=String(raw||"").trim().replace(/^```[a-z]*\s*|\s*```$/gi,"");
+  try{return JSON.parse(t)}catch{}
+  const C=[[t.indexOf("{"),t.lastIndexOf("}")],[t.indexOf("["),t.lastIndexOf("]")]].filter(x=>x[0]>=0&&x[1]>x[0]).sort((x,y)=>x[0]-y[0]);
+  for(const [a,b] of C){try{return JSON.parse(t.slice(a,b+1))}catch{}}
+  throw new Error("Hasil bukan JSON yang valid. Minta AI chat mengirim ulang JSON saja dalam satu blok kode.");
+}
+function msections(raw){
+  const t=String(raw||"").trim().replace(/^```[a-z]*[ \t]*\r?\n?/i,"").replace(/\r?\n?[ \t]*```$/,"").trim();
+  const o={script:"",arahan_teknis:"",paket_publikasi:"",asumsi:""};
+  if(t[0]==="{"){try{const j=JSON.parse(t);if(j&&(j.script||j.arahan_teknis)){Object.keys(o).forEach(k=>{o[k]=Array.isArray(j[k])?j[k].join("\n"):String(j[k]||"")});return o}}catch{}}
+  const K={"SCRIPT":"script","ARAHAN TEKNIS":"arahan_teknis","PAKET PUBLIKASI":"paket_publikasi","ASUMSI":"asumsi"};
+  const parts=t.split(/^[ \t]*=+[ \t]*(SCRIPT|ARAHAN TEKNIS|PAKET PUBLIKASI|ASUMSI)[ \t]*=+[ \t]*$/mi);
+  if(parts.length<3){o.script=t;return o}
+  for(let i=1;i<parts.length;i+=2)o[K[parts[i].toUpperCase()]]=(parts[i+1]||"").trim();
+  if(!o.script&&parts[0].trim())o.script=parts[0].trim();
+  return o;
+}
+pushed.manual=async function(s){
+  const d=s.d||chk(await sb.from("drafts").select("*").eq("id",s.id).single()).data;
+  const mode=s.mode||(d.params&&d.params.manual)||"ideas",rv=mode==="revise";
+  const base=await mprompt(d,mode);
+  const T={ideas:"Prompt ide",script:"Prompt script",revise:"Prompt revisi"}[mode];
+  return {title:T,body:`<p class="sub" style="padding:0 16px;white-space:normal">Cara manual tanpa AI server: salin prompt, tempel di AI chat pilihanmu, lalu tempel hasilnya di langkah 2.</p>
+  <div class="gt">1. Salin prompt</div>
+  ${rv?`<div class="grp"><label class="f"><span>Perintah revisi</span><textarea id="minst" rows="2" placeholder="mis. dialog Angel dibuat lebih santai">${esc(d.instruction||"")}</textarea></label></div>`:""}
+  <button class="btn" data-act="mcopy" data-mode="${mode}" data-id="${d.id}">Salin prompt</button>
+  <div class="grp"><details id="mdet" class="f"><summary>Lihat prompt</summary><div id="mprompt" data-raw="${esc(base)}" style="white-space:pre-wrap;max-height:260px;overflow:auto;font-size:13px;margin-top:8px;word-break:break-word">${esc(base)}</div></details></div>
+  <div class="gt">2. Tempel hasil dari AI chat</div>
+  <form data-form="mres" data-id="${d.id}" data-mode="${mode}"><div class="grp"><label class="f"><span>${mode==="ideas"?"Hasil JSON dari AI chat":"Hasil dari AI chat"}</span><textarea name="res" rows="4" style="max-height:240px;overflow:auto" placeholder="Tempel di sini"></textarea></label></div><button class="btn">Simpan hasil</button></form>
+  <div class="grp"><div class="c tap" data-act="mcancel" data-id="${d.id}"><span class="red">Batal</span></div></div>`};
+};
 {const _d=pushed.draft;pushed.draft=async function(s){const r=await _d.call(pushed,s);r.body+=`<div class="grp" style="margin-top:20px"><div class="c tap" data-act="del" data-tb="drafts" data-id="${s.id}" data-n="draf ini"><span class="red">Hapus draf</span></div></div>`;return r}}
 
 /* ===== Socilift: baca screenshot, kalender planner, evaluasi performa ===== */
@@ -751,10 +825,59 @@ const H={
    return toast("Tersimpan sebagian. Jalankan supabase-ai-providers.sql di Supabase agar provider baru dan cadangan aktif.");
   }
   toast("Pengaturan tersimpan",1);
+ },
+ async mres(f){
+  const id=f.dataset.id,mode=f.dataset.mode,raw=(f.elements.res.value||"").trim();
+  if(!raw)return toast("Tempel dulu hasil dari AI chat.");
+  const {data:d}=chk(await sb.from("drafts").select("*").eq("id",id).single());
+  const params={...(d.params||{}),manual:null};
+  if(mode==="ideas"){
+   const c=mparse(raw),L=Array.isArray(c)?c:c&&c.ideas;
+   if(!Array.isArray(L)||!L.length)throw new Error("Hasil tidak berisi daftar ide. Pastikan yang ditempel JSON lengkap dari AI.");
+   chk(await sb.from("drafts").update({status:"ide_siap",ideas:L.slice(0,3),chosen:null,error:null,params,updated_at:now()}).eq("id",id));
+  }else{
+   const c=msections(raw);
+   const history=d.script?[...(d.history||[]),{script:d.script,instruksi:d.instruction,at:now()}]:(d.history||[]);
+   chk(await sb.from("drafts").update({status:"script_siap",error:null,history,script:{...c,model:"AI chat (manual)"},params,updated_at:now()}).eq("id",id));
+  }
+  toast("Hasil tersimpan",1);stack[stack.length-1]={t:"draft",id};render(1);
  }
 };
 const A={
  tab:b=>{tab=b.dataset.v;resetNav();render(3)},
+ async mnew(b){
+  const f=b.closest("form"),ids=[...f.querySelectorAll("input[name=ch]:checked")].map(x=>x.value);
+  if(!ids.length)return toast("Pilih minimal satu tokoh.");
+  const row=chk(await sb.from("drafts").insert({project_id:pid,character_ids:ids,params:{note:(f.elements.note.value||"").trim()||null,manual:"ideas"}}).select("id").single()).data;
+  stack[stack.length-1]={t:"manual",id:row.id,mode:"ideas"};render(1)
+ },
+ async mgo(b){
+  const id=b.dataset.id,mode=b.dataset.mode;
+  const {data:d}=chk(await sb.from("drafts").select("params,chosen").eq("id",id).single());
+  const upd={params:{...(d.params||{}),manual:mode},updated_at:now()};
+  const f=document.querySelector('form[data-form="idea"]');
+  if(mode==="script"&&f&&d.chosen)upd.chosen={...d.chosen,...collect(f,["judul","premis","tema","konflik","hook","alur","ending","hubungan_episode_lalu"].map(k=>[k]))};
+  chk(await sb.from("drafts").update(upd).eq("id",id));
+  stack[stack.length-1]={t:"manual",id,mode};render(1);window.scrollTo(0,0)
+ },
+ async mcopy(b){
+  let t=$("#mprompt").dataset.raw,ins="";
+  if(b.dataset.mode==="revise"){
+   const e=$("#minst");ins=(e&&e.value||"").trim();
+   if(!ins)return toast("Tulis dulu perintah revisinya.");
+   t+="\n\nINSTRUKSI REVISI DARI PENGGUNA:\n"+ins;
+  }
+  try{await navigator.clipboard.writeText(t);toast("Prompt tersalin. Tempel di AI chat.",1)}
+  catch{const e=$("#mdet");if(e)e.open=true;toast("Tidak bisa menyalin otomatis. Buka Lihat prompt lalu salin manual.")}
+  if(ins)await sb.from("drafts").update({instruction:ins}).eq("id",b.dataset.id);
+ },
+ async mcancel(b){
+  const id=b.dataset.id,{data:d}=chk(await sb.from("drafts").select("params,script,ideas").eq("id",id).single());
+  if(d.script||(d.ideas&&d.ideas.length)){
+   chk(await sb.from("drafts").update({params:{...(d.params||{}),manual:null}}).eq("id",id));
+   stack[stack.length-1]={t:"draft",id};render(1);
+  }else{chk(await sb.from("drafts").delete().eq("id",id));back()}
+ },
  wall(b){try{localStorage.setItem("kos_wall",JSON.stringify({t:"preset",v:b.dataset.v}))}catch{}applyWall();render()},
  fx(){try{localStorage.setItem("kos_fx",fxOn()?"0":"1")}catch{}initFx();render()},
  async insight(b){chk(await sb.from("insights").update({active:b.dataset.on!=="1"}).eq("id",b.dataset.id));render()},
@@ -861,7 +984,7 @@ function initFx(){
   const h=document.documentElement,ua=navigator.userAgent,ok=/Chrome\//.test(ua)&&!/iPhone|iPad|iPod/.test(ua);
   if(ok&&fxOn()){try{const m=$("#lensmap");if(!m.getAttribute("href"))m.setAttribute("href",lensMap());h.classList.add("fx")}catch{h.classList.remove("fx")}}else h.classList.remove("fx");
 }
-const INSTANT=new Set(["tab","back","vtab","cancel","edit","unpick","open","wall","fx","epv","cmo","dper","dmet"]);
+const INSTANT=new Set(["mcopy","tab","back","vtab","cancel","edit","unpick","open","wall","fx","epv","cmo","dper","dmet"]);
 document.addEventListener("submit",async ev=>{ev.preventDefault();const f=ev.target;if(!H[f.dataset.form])return;
   const btn=ev.submitter||f.querySelector("button.btn")||(f.id&&document.querySelector('button[form="'+f.id+'"]'));
   if(btn&&btn.classList.contains("busy"))return;
