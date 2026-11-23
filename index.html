@@ -176,13 +176,21 @@ header.n{background:rgba(18,22,27,.72)}
 .cd{min-height:54px;border-radius:10px;background:var(--gl);border:.5px solid var(--gb);font-size:12px;padding:4px;overflow:hidden}.cd.t{border-color:var(--tint)}.cd b{display:block;font-weight:600;color:var(--mute)}
 .cd i{display:block;font-style:normal;font-size:10.5px;background:var(--tint);color:var(--km-ink);border-radius:6px;padding:1px 4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cm{display:flex;justify-content:space-between;align-items:center;padding:4px 20px 8px}.cm b{font-size:17px}
-/* ===== nyaman mengetik ===== */
-.f{padding:12px 16px 14px;transition:background .2s}
-.f span{font-size:13px;font-weight:500;margin-bottom:4px}
-.f:focus-within{background:rgba(255,255,255,.05)}.f:focus-within span{color:var(--tintd)}
-.f input,.f textarea,.f select{font-size:17px;line-height:1.5;padding:4px 0}
-.f textarea{resize:none;overflow:hidden;min-height:96px}
-.nopad{padding-bottom:calc(40vh + env(safe-area-inset-bottom))!important}
+
+/* ===== naskah produksi: tampilan dokumen seperti PDF ===== */
+.doc{background:#fbfaf6;color:#1d2126;border-radius:10px;padding:26px 22px 32px;box-shadow:0 10px 30px rgba(0,0,0,.35);font:16px/1.62 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;word-break:break-word}
+.doc h1,.doc h2{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-weight:400;color:#14181d}
+.doc h1{font-size:30px;line-height:1.15;margin:0 0 8px}
+.doc h1+p{font-style:italic;color:#3a4047;margin:0 0 20px}
+.doc h2{font-size:22px;line-height:1.25;margin:28px 0 10px}
+.doc h2:first-child,.doc h1+p+h2{margin-top:6px}
+.doc h3{font-size:14.5px;font-weight:600;line-height:1.4;margin:0 0 10px;color:#14181d}
+.doc hr{border:0;border-top:1px solid #d8d5cb;margin:18px 0 16px}
+.doc p{margin:0 0 10px}
+.doc ul{margin:0 0 12px;padding-left:22px}.doc li{margin:3px 0}
+.doc li::marker{color:#14181d}
+.doc .dlg i{color:#3a4047}
+.doc .scn-t{font-weight:600;margin:6px 0 10px}
 </style></head><body>
 <div id="pb"></div><div id="bg"></div><div id="app"><div class="empty" id="boot" style="padding-top:30vh">Memuat aplikasi…</div></div><div id="msg" role="alert"></div><svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="lensfx" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feImage id="lensmap" preserveAspectRatio="none" result="m"/><feDisplacementMap in="SourceGraphic" in2="m" scale="34" xChannelSelector="R" yChannelSelector="G"/></filter></svg><nav class="tabs hide" id="tabs"></nav>
 <script>
@@ -202,7 +210,7 @@ const RATES=[["skip_rate","Jumlah lewati (skip)"],["share_rate","Jumlah bagikan"
 const COUNTS=[["views","Tayangan"],["reach","Akun terjangkau"],["avg_watch_sec","Rata-rata waktu tonton","s"],["retention_3s","Masih menonton di detik 3","%"],["profile_visits","Kunjungan profil"],["follows","Follow dari konten"]];
 const PER={"24j":"24 jam","48j":"48 jam","7h":"7 hari",custom:"Custom"},CMP={lebih_rendah:"Lebih rendah",lebih_tinggi:"Lebih tinggi"};
 const TABS=[["brand","Brand",'<path d="M12 3l2.6 5.9 6.4.6-4.8 4.3 1.4 6.3L12 16.9 6.4 20.1l1.4-6.3L3 9.5l6.4-.6z"/>'],["char","Karakter",'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.5 0 4.5 1.8 4.5 5"/>'],["eps","Episode",'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4.5-2.5z"/>'],["ana","Analisis",'<path d="M6 20v-7M12 20V5M18 20v-10"/>'],["ai","Pengaturan",'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/>']];
-let user,pid,tab="brand",stack=[],vtab="script",epv="list",cm=new Date(),dper="24j",dmet="views";
+let user,pid,tab="brand",stack=[],vtab="script",epv="list",epAll=false,cm=new Date(),dper="24j",dmet="views";
 const cur=()=>stack[stack.length-1];
 let hdepth=0;
 function nav(s){stack.push(s);hdepth++;history.pushState({n:hdepth},"");render(1)}
@@ -289,21 +297,66 @@ function parseScript(raw){
 function fmtScript(raw){
   const p=parseScript(raw);
   if(!p.scenes.length)return fmtText(raw);
-  let o="";
-  if(p.sum.length)o+=`<div class="sbox">`+p.sum.map(x=>x.h?`<div class="s-h">${esc(x.h)}</div>`:x.k?`<div class="s-kv"><span class="s-k">${esc(x.k)}</span><span class="s-v">${esc(x.v)}</span></div>`:`<p class="s-p">${esc(x.p)}</p>`).join("")+`</div>`;
-  const spk={};
+  let o="",ul=false;
+  const cl=()=>{if(ul){o+="</ul>";ul=false}};
+  const li=h=>{if(!ul){o+="<ul>";ul=true}o+=`<li>${h}</li>`};
+  if(p.sum.length){
+    o+=`<h2>Lembar Informasi</h2>`;
+    for(const x of p.sum){
+      if(x.h){cl();o+=`<h2>${esc(x.h)}</h2>`}
+      else if(x.k)li(`<b>${esc(x.k)}:</b> ${esc(x.v)}`);
+      else{cl();o+=`<p>${esc(x.p)}</p>`}
+    }
+    cl();
+  }
   p.scenes.forEach((sc,i)=>{
-    o+=`<section class="scn"><div class="scn-h"><b>${esc(sc.title||"Adegan "+(i+1))}</b>${sc.ts?`<span class="s-tm">${esc(sc.ts)}</span>`:""}</div>${sc.loc?`<div class="s-loc">${esc(sc.loc)}</div>`:""}`;
-    o+=sc.items.map(it=>{
+    if(i||p.sum.length)o+="<hr>";
+    o+=`<h3>${esc(sc.title||"ADEGAN "+(i+1))}${sc.ts?" · "+esc(sc.ts):""}</h3>`;
+    if(sc.loc)o+=`<p><i>${esc(sc.loc)}</i></p>`;
+    for(const it of sc.items){
       if(it.t==="dlg"){
-        const k=(it.w||"?").toLowerCase();if(!(k in spk))spk[k]=Object.keys(spk).length;
-        return `<div class="dl${spk[k]%2?" r":""}" style="--h:${hue(k)}"><div class="who">${esc(it.w||"Dialog")}</div><div class="bub">${esc(it.v)}</div>${it.e?`<div class="ex">${esc(it.e)}</div>`:""}</div>`;
+        cl();
+        const names=(it.w||"").split(/\s*[,&]\s*|\s+dan\s+/i).map(x=>x.trim()).filter(Boolean);
+        let parts=[{w:it.w,v:it.v}];
+        if(names.length>1){
+          const re=new RegExp("(?:^|\\s)("+names.map(n=>n.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("|")+"):\\s*","gi");
+          const out=[];let last=0,m,cw=null;
+          while((m=re.exec(it.v))){if(cw!==null)out.push({w:cw,v:it.v.slice(last,m.index).trim()});cw=m[1];last=re.lastIndex}
+          if(cw!==null){out.push({w:cw,v:it.v.slice(last).trim()});parts=out}
+        }
+        parts.forEach((d,j)=>{o+=`<p class="dlg"><b>${esc((d.w||"Dialog").toUpperCase())}</b> ${j===parts.length-1&&it.e?`<i>(${esc(it.e)})</i> `:""}${esc(d.v)}</p>`});
       }
-      if(it.t==="ps")return `<div class="ps">Jeda ${esc(it.v)}</div>`;
-      return `<div class="blk ${it.t}"><div class="bt">${IC[it.t]}${BN[it.t]}</div><p>${esc(it.v)}</p></div>`;
-    }).join("")+`</section>`;
+      else if(it.t==="ps"){cl();o+=`<p><i>Jeda ${esc(it.v)}</i></p>`}
+      else if(it.t==="act"){cl();o+=`<p>${esc(it.v)}</p>`}
+      else if(it.t==="cam"){cl();o+=`<p><b>Shot:</b> ${esc(it.v)}</p>`}
+      else li(`${it.t==="aud"?"Suara":"Catatan sutradara"}: ${esc(it.v)}`);
+    }
+    cl();
   });
-  return o;
+  return `<article class="doc">${o}</article>`;
+}
+/* ===== naskah produksi: render markdown ringan jadi dokumen bergaya PDF ===== */
+const inl=t=>esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g,"$1<i>$2</i>");
+const DLG=/^([A-ZÀ-Ý][A-ZÀ-Ý0-9'’]*(?: [A-ZÀ-Ý0-9'’]+)?)(?: \(([^)]{1,90})\))? (\S.*)$/;
+const NOD=/^(SCENE|SHOT|INSERT|ADEGAN|EXT|INT|CUT|FADE|CATATAN|NOTE)$/;
+const isDoc=r=>/^\s*#{1,3}\s+\S/m.test(r);
+function fmtDoc(raw){
+  let o="",ul=false;
+  const cl=()=>{if(ul){o+="</ul>";ul=false}};
+  for(const ln of String(raw).split(/\r?\n/)){
+    const t=ln.trim();
+    if(!t){cl();continue}
+    let m;
+    if(/^(-{3,}|\*{3,}|_{3,})$/.test(t)){cl();o+="<hr>";continue}
+    if(m=t.match(/^(#{1,3})\s+(.*)$/)){cl();const n=m[1].length;o+=`<h${n}>${inl(m[2])}</h${n}>`;continue}
+    if(m=t.match(/^(?:[-*•])\s+(.*)$/)){if(!ul){o+="<ul>";ul=true}o+=`<li>${inl(m[1])}</li>`;continue}
+    cl();
+    if(m=t.match(/^(?:\*\*)?((?:SCENE|ADEGAN)\s*\d+[^*]*?)(?:\*\*)?$/i)){o+=`<p class="scn-t">${esc(m[1].trim())}</p>`;continue}
+    if((m=t.match(DLG))&&!NOD.test(m[1].split(" ")[0])){o+=`<p class="dlg"><b>${esc(m[1])}</b>${m[2]?` <i>(${esc(m[2])})</i>`:""} ${inl(m[3])}</p>`;continue}
+    o+=`<p>${inl(t)}</p>`;
+  }
+  cl();
+  return `<article class="doc">${o}</article>`;
 }
 function fmtText(raw){
   return `<div class="sbox">`+String(raw).split(/\r?\n/).map(l=>{
@@ -315,7 +368,7 @@ function fmtText(raw){
     return `<div class="s-ln">${esc(t)}</div>`;
   }).join("")+`</div>`;
 }
-const fmtOut=(t,k)=>{const r=t||"";return `<div id="out" class="scr" data-raw="${esc(r)}">${r.trim()?(k==="script"?fmtScript(r):fmtText(r)):`<div class="empty">(kosong)</div>`}</div>`};
+const fmtOut=(t,k)=>{const r=t||"";return `<div id="out" class="scr" data-raw="${esc(r)}">${r.trim()?(isDoc(r)?fmtDoc(r):k==="script"?fmtScript(r):fmtText(r)):`<div class="empty">(kosong)</div>`}</div>`};
 const vtabs=TB=>`<div class="vt">${Object.entries(TB).map(([k,l])=>`<button class="link vtb${k===vtab?" on":""}" data-act="vtab" data-v="${k}">${l}</button>`).join("")}</div>`;
 
 /* ===== layar ===== */
@@ -326,7 +379,6 @@ const PROV=[
  {id:"openrouter",name:"OpenRouter",env:"OPENROUTER_API_KEY",model:"openrouter/free",tag:"Ada model gratis (:free)"},
  {id:"maia",name:"MAIA Router",env:"MAIA_API_KEY",model:"maia/gemini-2.5-flash",tag:"Router berbayar/kredit, cek paket di maiarouter.ai"},
  {id:"mistral",name:"Mistral",env:"MISTRAL_API_KEY",model:"mistral-small-latest",tag:"Ada paket gratis terbatas"},
- {id:"inferx",name:"InferX",env:"INFERX_API_KEY",model:"deepseek-v4.1-flash",tag:"Berbayar kredit, banyak diskon, ada model $0"},
  {id:"deepseek",name:"DeepSeek",env:"DEEPSEEK_API_KEY",model:"deepseek-chat",tag:"Berbayar, murah"},
  {id:"openai",name:"OpenAI",env:"OPENAI_API_KEY",model:"gpt-4o-mini",tag:"Berbayar"},
  {id:"anthropic",name:"Claude (Anthropic)",env:"ANTHROPIC_API_KEY",model:"claude-haiku-5-5",tag:"Berbayar, tanpa paket gratis"}
@@ -342,10 +394,16 @@ const roots={
   return {title:"Karakter",plus:"char",search:1,body:l.length?l.map(c=>`<div class="row" data-act="open" data-t="char" data-id="${c.id}">${av(c.name)}<div class="mid"><div><b>${esc(c.name)}${c.nickname?` (${esc(c.nickname)})`:""}</b><small>${esc(c.traits||c.actor_name||"Belum ada deskripsi")}</small></div><span class="pill">${CS[c.status]}</span></div></div>`).join(""):`<div class="empty">Belum ada karakter.<br>Ketuk tombol + untuk menambah yang pertama.</div>`};
  },
  async eps(){
-  const [{data:l},{data:dr}]=(await Promise.all([sb.from("episodes").select("id,number,title,summary,status").order("number"),sb.from("drafts").select("id,status,chosen,created_at,params").neq("status","disetujui").order("created_at",{ascending:false})])).map(chk);
+  const [{data:l},{data:dr}]=(await Promise.all([sb.from("episodes").select("id,number,title,summary,status").order("number"),sb.from("drafts").select("id,status,chosen,created_at").neq("status","disetujui").order("created_at",{ascending:false})])).map(chk);
   const DS={ide_menunggu:"AI menyusun ide…",ide_siap:"Pilih ide",script_menunggu:"AI menulis script…",script_siap:"Review script",gagal:"Gagal"};
-  const dh=dr.length?`<div class="gt" style="margin-top:6px">Draf berjalan</div>`+dr.map(x=>`<div class="row" data-act="open" data-t="draft" data-id="${x.id}">${av("Draf","✨")}<div class="mid"><div><b>${esc(x.chosen?.judul||"Draf episode baru")}</b><small>${x.params&&x.params.manual?"Menunggu hasil dari AI chat":DS[x.status]}</small></div></div><button class="rd" type="button" aria-label="Hapus draf" data-act="del" data-tb="drafts" data-id="${x.id}" data-n="${esc(x.chosen?.judul||"draf ini")}"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5M10 11v5M14 11v5"/></svg></button></div>`).join("")+`<div class="gt">Episode</div>`:"";
-  return {title:"Episode",plus:"newdraft",search:1,body:dh+(l.length?l.map(e=>`<div class="row" data-act="open" data-t="ep" data-id="${e.id}">${av(e.title,"EP"+e.number)}<div class="mid"><div><b>${esc(e.title)}</b><small>${esc(e.summary||"Belum ada ringkasan")}</small></div><span class="pill">${ES[e.status]}</span></div></div>`).join(""):`<div class="empty">Belum ada episode.<br>Ketuk tombol + untuk membuat episode dengan AI.</div>`)};
+  const PUB=["published","analyzed"],pr=l.filter(e=>!PUB.includes(e.status)).sort((a,b)=>b.number-a.number),pb=l.filter(e=>PUB.includes(e.status)).sort((a,b)=>b.number-a.number);
+  const counts={draf:dr.length,proses:pr.length,publish:pb.length};
+  const v=epv==="list"?(dr.length?"draf":"proses"):epv,LIM=12;
+  const erow=e=>`<div class="row" data-act="open" data-t="ep" data-id="${e.id}">${av(e.title,"EP"+e.number)}<div class="mid"><div><b>${esc(e.title)}</b><small>${esc(e.summary||"Belum ada ringkasan")}</small></div><span class="pill">${ES[e.status]}</span></div></div>`;
+  const drow=x=>`<div class="row" data-act="open" data-t="draft" data-id="${x.id}">${av("Draf","✨")}<div class="mid"><div><b>${esc(x.chosen?.judul||"Draf episode baru")}</b><small>${DS[x.status]}</small></div></div><button class="rd" type="button" aria-label="Hapus draf" data-act="del" data-tb="drafts" data-id="${x.id}" data-n="${esc(x.chosen?.judul||"draf ini")}"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5M10 11v5M14 11v5"/></svg></button></div>`;
+  const lst=(a,empty)=>{if(!a.length)return `<div class="empty">${empty}</div>`;const sh=epAll?a:a.slice(0,LIM);return sh.map(erow).join("")+(a.length>LIM?`<div class="grp" style="margin:8px 16px"><div class="c tap" data-act="epall"><span style="color:var(--tintd);font-weight:600">${epAll?"Tampilkan lebih sedikit":"Tampilkan semua ("+a.length+")"}</span></div></div>`:"")};
+  const body=v==="draf"?(dr.length?dr.map(drow).join(""):`<div class="empty">Tidak ada draf berjalan.<br>Ketuk tombol + untuk membuat episode dengan AI.</div>`):v==="publish"?lst(pb,"Belum ada episode yang dipublikasikan."):lst(pr,"Tidak ada episode dalam proses.<br>Setujui draf untuk menjadikannya episode.");
+  return {title:"Episode",plus:"newdraft",search:1,counts,body};
  },
  async ana(){
   const [e,sn,ins]=await Promise.all([sb.from("episodes").select("id,number,title,status").in("status",["approved","in_production","published","analyzed"]).order("number"),sb.from("snapshots").select("id,episode_id,analysis_status,measured_at").order("measured_at",{ascending:false}),sb.from("insights").select("id,active")]);
@@ -432,32 +490,34 @@ const pushed={
   const {data:l}=chk(await sb.from("characters").select("id,name,nickname").eq("status","aktif").order("created_at"));
   return {title:"Episode baru",body:l.length?`<p class="sub" style="padding:0 16px;white-space:normal">Pilih tokoh yang tampil di episode ini. AI akan memberi 3 ide berdasarkan Brand DNA, profil tokoh, dan episode sebelumnya.</p>
   <form data-form="newdraft"><div class="grp" style="margin-top:12px">${l.map(c=>`<label class="c tap"><span>${esc(c.name)}${c.nickname?` (${esc(c.nickname)})`:""}</span><input type="checkbox" name="ch" value="${c.id}" style="width:22px;height:22px;accent-color:#25d366"></label>`).join("")}</div>
-  <div class="grp" style="margin-top:12px">${fld(["note","Arah atau tema (opsional)",1],"")}</div><button class="btn">Minta 3 ide dari AI</button><button type="button" class="btn" style="background:var(--cell);color:var(--tintd);margin-top:0" data-act="mnew">Salin prompt untuk AI chat (manual)</button></form>
-  <div class="grp"><div class="c tap ch" data-act="open" data-t="ep"><span>Tambah episode manual<small class="sub">Tanpa AI</small></span></div></div>`:`<div class="empty">Belum ada karakter aktif.<br>Tambahkan karakter dulu di tab Karakter.</div>`};
+  <div class="grp" style="margin-top:12px">${fld(["note","Arah atau tema (opsional)",1],"")}</div><button class="btn">Minta 3 ide dari AI</button></form>
+  <div class="grp"><div class="c tap ch" data-act="open" data-t="ep"><span>Tambah episode manual<small class="sub">Tanpa AI</small></span></div></div>
+  ${pbox([["pcopyideas","Salin prompt ide","Berisi Brand DNA, tokoh terpilih, dan episode sebelumnya. Tempel ke chat AI lain."]],"psaveideas","","Simpan 3 ide dari hasil AI")}`:`<div class="empty">Belum ada karakter aktif.<br>Tambahkan karakter dulu di tab Karakter.</div>`};
  },
  async draft(s){
   const d=chk(await sb.from("drafts").select("*").eq("id",s.id).single()).data,T="Draf episode";
-  if(d.params&&d.params.manual)return await pushed.manual({id:d.id,mode:d.params.manual,d});
   if(d.status.endsWith("menunggu")&&Date.now()-new Date(d.updated_at)>6*60000){d.status="gagal";d.error="Waktu habis. Coba lagi."}
   if(d.status.endsWith("menunggu")){setTimeout(()=>{if(cur()&&cur().t==="draft"&&cur().id===s.id)render()},3000);return {title:T,body:`<div class="empty">${d.status==="ide_menunggu"?"AI menyusun 3 ide…":"AI sedang menulis…"}<br>Biasanya 20–60 detik. Layar diperbarui otomatis.</div>`}}
   if(d.status==="gagal")return {title:T,body:`<div class="empty">Gagal.<br><span class="red">${esc(d.error||"Terjadi kesalahan.")}</span></div><button class="btn" data-act="dretry" data-id="${d.id}">Coba lagi</button>`};
   if(d.status==="disetujui")return {title:T,body:`<div class="empty">Draf ini sudah disetujui dan menjadi episode.</div>`};
   if(d.status==="ide_siap"&&!d.chosen){
-   const R=[["Premis","premis"],["Hook","hook"],["Konflik","konflik"],["Ending","ending"],["Alasan direkomendasikan","alasan"]];
+   const R=[["Premis","premis"],["Hook","hook"],["Konflik","konflik"],["Rangkaian adegan","rangkaian_adegan"],["Ending","ending"],["Alasan direkomendasikan","alasan"]];
    return {title:"Pilih ide",body:`<p class="sub" style="padding:0 16px;white-space:normal">Skor adalah estimasi AI, bukan prediksi performa.</p>${(d.ideas||[]).map((x,i)=>`<div class="grp" style="margin-top:14px"><div class="f"><span>Ide ${i+1}</span><b>${esc(x.judul)}</b></div>${R.map(([l,k])=>`<div class="f"><span>${l}</span>${esc(x[k])}</div>`).join("")}<div class="f"><span>Skor estimasi (1–10)</span>${Object.entries(x.skor||{}).map(([k,v])=>esc(k.replace(/_/g," "))+" "+esc(v)).join(" · ")}</div><div class="c tap" data-act="pick" data-id="${d.id}" data-i="${i}"><span style="color:var(--tintd);font-weight:600">Pilih dan edit ide ini</span></div></div>`).join("")}
-   <div class="grp" style="margin-top:16px"><div class="c tap" data-act="dnew" data-id="${d.id}"><span>Minta 3 ide baru</span></div><div class="c tap" data-act="mgo" data-mode="ideas" data-id="${d.id}"><span>Salin prompt 3 ide baru (AI chat)</span></div></div>`};
+   <div class="grp" style="margin-top:16px"><div class="c tap" data-act="dnew" data-id="${d.id}"><span>Minta 3 ide baru</span></div></div>`};
   }
   if(d.status==="ide_siap"){
-   const F=[["judul","Judul"],["premis","Premis",1],["tema","Tema"],["konflik","Konflik utama",1],["hook","Hook",1],["alur","Perkembangan cerita",1],["ending","Ending",1],["hubungan_episode_lalu","Hubungan dengan episode terdahulu",1]];
+   const F=[["judul","Judul"],["premis","Premis",1],["tema","Tema"],["konflik","Konflik utama",1],["hook","Hook",1],["alur","Perkembangan cerita",1],["rangkaian_adegan","Rangkaian adegan (lokasi, aktivitas, durasi)",1],["ending","Ending",1],["hubungan_episode_lalu","Hubungan dengan episode terdahulu",1]];
    return {title:"Edit ide",body:`<p class="sub" style="padding:0 16px;white-space:normal">Ubah bagian yang kurang cocok. Jika sudah pas, setujui agar AI menulis script lengkap.</p>
    <form data-form="idea" data-id="${d.id}"><div class="grp" style="margin-top:12px">${F.map(f=>fld(f,d.chosen[f[0]])).join("")}</div><button class="btn">Setujui ide dan buat script</button></form>
-   <div class="grp"><div class="c tap" data-act="unpick" data-id="${d.id}"><span>Kembali ke 3 ide</span></div><div class="c tap" data-act="mgo" data-mode="script" data-id="${d.id}"><span>Salin prompt script untuk AI chat<small class="sub">Tanpa AI server, hasil ditempel manual</small></span></div></div>`};
+   <div class="grp"><div class="c tap" data-act="unpick" data-id="${d.id}"><span>Kembali ke 3 ide</span></div></div>
+   ${pbox([["pcopyscript","Salin prompt script","Memakai ide di atas (termasuk perubahan Anda). Tempel ke chat AI lain."]],"psavescript",d.id,"Simpan script dari hasil AI")}`};
   }
   const c=d.script||{},TB={script:"Script",teknis:"Teknis",pub:"Publikasi",asumsi:"Asumsi"};
   let t={script:c.script,teknis:c.arahan_teknis,pub:c.paket_publikasi,asumsi:c.asumsi}[vtab];if(Array.isArray(t))t=t.join("\n");
   return {title:esc(d.chosen?.judul||"Script"),body:`${vtabs(TB)}${fmtOut(t,vtab)}
   <form data-form="rev" data-id="${d.id}"><div class="gt">Chat revisi</div><div class="grp"><label class="f"><span>Perintah ke AI</span><textarea name="ins" rows="2" placeholder="mis. dialog Angel dibuat lebih santai"></textarea></label></div><button class="btn" style="background:var(--cell);color:var(--tintd)">Kirim revisi</button></form>
-  <div class="grp"><div class="c tap" data-act="copy"><span>Salin teks tab ini</span></div><div class="c tap" data-act="dregen" data-id="${d.id}"><span>Tidak cocok, generate ulang</span></div><div class="c tap" data-act="mgo" data-mode="revise" data-id="${d.id}"><span>Revisi lewat AI chat (manual)<small class="sub">Salin prompt, tempel hasil revisi</small></span></div><div class="c tap" data-act="mgo" data-mode="script" data-id="${d.id}"><span>Script ulang lewat AI chat (manual)</span></div></div>
+  <div class="grp"><div class="c tap" data-act="copy"><span>Salin teks tab ini</span></div><div class="c tap" data-act="dltxt"><span>Unduh tab ini (.txt)</span></div><div class="c tap" data-act="dregen" data-id="${d.id}"><span>Tidak cocok, generate ulang</span></div></div>
+  ${pbox([["pcopyrev","Salin prompt revisi","Pakai perintah di kolom Chat revisi di atas."],["pcopyregen","Salin prompt generate ulang","Untuk meminta script baru dari ide yang sama."]],"psavescript",d.id,"Simpan script dari hasil AI")}
   <button class="btn" data-act="dapprove" data-id="${d.id}">Setujui dan simpan sebagai episode</button>
   <p class="sub" style="margin:0 32px 10px;white-space:normal">${(d.history||[]).length?`${d.history.length} versi sebelumnya tersimpan. `:""}Dibuat oleh ${esc(c.model||"AI")}. Ini saran AI; keputusan akhir ada di Anda.</p>`};
  },
@@ -478,7 +538,7 @@ const pushed={
   const c=v.content||{},TB={script:"Script",teknis:"Teknis",pub:"Publikasi",asumsi:"Asumsi"};
   let t={script:c.script,teknis:c.arahan_teknis,pub:c.paket_publikasi,asumsi:c.asumsi}[vtab];if(Array.isArray(t))t=t.join("\n");
   return {title:ttl,body:`${vtabs(TB)}${fmtOut(t,vtab)}
-  <div class="grp" style="margin-top:16px"><div class="c tap" data-act="copy"><span>Salin teks tab ini</span></div><div class="c tap" data-act="approve" data-id="${v.id}"><span>${v.approved?"✓ Versi ini sudah disetujui":"Setujui versi ini"}</span></div></div>
+  <div class="grp" style="margin-top:16px"><div class="c tap" data-act="copy"><span>Salin teks tab ini</span></div><div class="c tap" data-act="dltxt"><span>Unduh tab ini (.txt)</span></div><div class="c tap" data-act="approve" data-id="${v.id}"><span>${v.approved?"✓ Versi ini sudah disetujui":"Setujui versi ini"}</span></div></div>
   <p class="sub" style="margin:10px 32px;white-space:normal">Dibuat oleh ${esc(c.model||"AI")}. Ini saran AI; keputusan akhir ada di Anda. Setiap pembuatan disimpan sebagai versi baru.</p>`};
  },
  async ep(s){
@@ -575,79 +635,6 @@ async function runGen(id){
     await sb.from("script_versions").update({status:"gagal",error:"Fungsi server tidak dapat dijalankan ("+e.message+"). Pastikan deploy lewat GitHub."}).eq("id",id);
   }
 }
-
-/* ===== Mode manual: salin prompt ke AI chat, hasil ditempel sendiri ===== */
-const MBASE=`Kamu adalah creative director, penulis naskah, dan sutradara serial Instagram Reels (vertikal 9:16) berbahasa Indonesia untuk akun @kevin_k.w.
-Aturan:
-- Pakai HANYA data di bawah. Jangan mengarang karakter, fakta, atau episode. Jika informasi penting tidak ada, tulis "belum ditentukan" dan catat sebagai asumsi.
-- Dialog natural, bahasa percakapan Indonesia sesuai gaya bicara tiap karakter. Hindari pidato motivasi dan penjelasan emosi yang sudah terlihat dari aksi.
-- Jangan membocorkan rahasia karakter sebelum waktunya. Jaga konsistensi dengan profil karakter, Brand DNA, dan episode sebelumnya. Jangan ulangi konflik tanpa perkembangan baru.
-- Hook harus dibayar oleh isi cerita (bukan clickbait). Tidak semua episode harus cliffhanger.
-- Produksi realistis (smartphone, tripod, mikrofon, lampu sederhana); beri alternatif bila alat terbatas. Musik hanya yang berlisensi atau bebas royalti.
-- Jangan menyalin karya kreator lain.
-- Jika ada PEMBELAJARAN dari analisis performa, terapkan yang relevan dan jelaskan singkat pengaruhnya: pada tugas ide, sebutkan di kunci "alasan" tiap ide; pada tugas script, tambahkan baris berawalan "Pembelajaran dipakai:" di bagian ASUMSI. Perlakukan pembelajaran berstatus hipotesis sebagai uji coba, bukan kepastian.`;
-const MIDEAS=`TUGAS: usulkan TEPAT 3 ide episode yang berbeda (variasi konflik, hook, dan ending) untuk tokoh terpilih. Jangan hanya mengejar yang paling viral; pertimbangkan konsistensi serial dan identitas brand.
-Keluarkan JSON {"ideas":[...]} berisi 3 objek. Tiap objek punya kunci string: judul, premis, tema, target_audiens, masalah, karakter, konflik, hook, alur, ending, hubungan_episode_lalu, tujuan_awareness, potensi_produksi, alasan; dan kunci "skor" berisi angka 1-10 untuk: relevansi_audiens, kekuatan_hook, potensi_retensi, shareability, orisinalitas, konsistensi_karakter, kesesuaian_brand, kemudahan_produksi. Skor hanya estimasi AI, bukan prediksi performa.
-FORMAT JAWABAN: balas HANYA dengan JSON valid itu, tanpa teks pembuka atau penutup, dan taruh dalam satu blok kode agar mudah disalin.`;
-const MOUT=`FORMAT JAWABAN: teks biasa tanpa tanda markdown, dan taruh SELURUH jawaban dalam satu blok kode agar mudah disalin. Pakai persis 4 penanda ini, masing-masing di baris sendiri:
-=== SCRIPT ===
-(ringkasan produksi singkat: logline, durasi, karakter, lokasi; struktur: hook, konflik, setup, eskalasi, payoff, ending; lalu dialog lengkap. Tiap adegan memakai baris berlabel: TIMESTAMP, LOKASI, SHOT, AKSI, KARAKTER, DIALOG, EKSPRESI, PAUSE, AUDIO, CATATAN SUTRADARA.)
-=== ARAHAN TEKNIS ===
-(shot list: nomor, timestamp, ukuran shot, sudut, posisi dan gerak kamera, blocking, durasi, pencahayaan, audio, transisi; frame rate dan shutter speed, exposure dan white balance, penempatan kamera, arah cahaya, komposisi 9:16, alternatif shot, rencana editing: ritme, subtitle, sound design, color grading, frame pembuka dan penutup.)
-=== PAKET PUBLIKASI ===
-(3 alternatif judul atau opening text, caption, CTA natural, teks cover, kata kunci, hashtag seperlunya, komentar natural untuk dipancing (bukan engagement bait), hipotesis performa.)
-=== ASUMSI ===
-(daftar asumsi dan hal yang belum ditentukan, satu per baris.)`;
-const MSCRIPT=`TUGAS: tulis script episode lengkap dari hook sampai ending berdasarkan ide yang sudah disetujui pengguna (ikuti idenya, jangan diganti).\n${MOUT}`;
-const MREVISE=`TUGAS: revisi script saat ini sesuai instruksi pengguna. Ubah hanya yang diminta dan pertahankan bagian lain. Tetap patuhi aturan di atas.\n${MOUT}`;
-async function mprompt(d,mode){
-  const cl=o=>Object.fromEntries(Object.entries(o||{}).filter(([k,v])=>v&&!["id","project_id","created_at","updated_at"].includes(k)));
-  const ids=d.character_ids||[],P=d.project_id;
-  const [br,ch,pv,ins]=await Promise.all([
-    sb.from("brand_profiles").select("data").eq("project_id",P).limit(1),
-    ids.length?sb.from("characters").select("*").eq("project_id",P).in("id",ids):Promise.resolve({data:[]}),
-    sb.from("episodes").select("number,title,summary,main_conflict,key_events,new_info,relationship_changes,unpaid_promises,cliffhanger").eq("project_id",P).order("number",{ascending:false}).limit(5),
-    sb.from("insights").select("teks,rekomendasi,keyakinan,status").eq("project_id",P).eq("active",true).order("created_at",{ascending:false}).limit(10)]);
-  chk(br);chk(ch);chk(pv);
-  const J=JSON.stringify;
-  const ctx=`DATA BRAND DNA (kosong berarti belum ditentukan):\n${J(cl(br.data&&br.data[0]&&br.data[0].data))}\n\nTOKOH YANG TAMPIL:\n${J((ch.data||[]).map(cl))}\n\n5 EPISODE TERAKHIR (terbaru dulu, bisa kosong jika ini episode pertama):\n${J((pv.data||[]).map(cl))}\n\nPEMBELAJARAN DARI ANALISIS PERFORMA (aktif, bisa kosong):\n${J(ins.data||[])}\n\nARAH DARI PENGGUNA (opsional): ${(d.params&&d.params.note)||"-"}`;
-  const idea=`\n\nIDE YANG DISETUJUI PENGGUNA:\n${J(d.chosen)}`;
-  if(mode==="ideas")return `${MBASE}\n${MIDEAS}\n\n${ctx}`;
-  if(mode==="script")return `${MBASE}\n${MSCRIPT}\n\n${ctx}${idea}`;
-  return `${MBASE}\n${MREVISE}\n\n${ctx}${idea}\n\nSCRIPT SAAT INI:\n${J({...(d.script||{}),model:undefined})}`;
-}
-function mparse(raw){
-  const t=String(raw||"").trim().replace(/^```[a-z]*\s*|\s*```$/gi,"");
-  try{return JSON.parse(t)}catch{}
-  const C=[[t.indexOf("{"),t.lastIndexOf("}")],[t.indexOf("["),t.lastIndexOf("]")]].filter(x=>x[0]>=0&&x[1]>x[0]).sort((x,y)=>x[0]-y[0]);
-  for(const [a,b] of C){try{return JSON.parse(t.slice(a,b+1))}catch{}}
-  throw new Error("Hasil bukan JSON yang valid. Minta AI chat mengirim ulang JSON saja dalam satu blok kode.");
-}
-function msections(raw){
-  const t=String(raw||"").trim().replace(/^```[a-z]*[ \t]*\r?\n?/i,"").replace(/\r?\n?[ \t]*```$/,"").trim();
-  const o={script:"",arahan_teknis:"",paket_publikasi:"",asumsi:""};
-  if(t[0]==="{"){try{const j=JSON.parse(t);if(j&&(j.script||j.arahan_teknis)){Object.keys(o).forEach(k=>{o[k]=Array.isArray(j[k])?j[k].join("\n"):String(j[k]||"")});return o}}catch{}}
-  const K={"SCRIPT":"script","ARAHAN TEKNIS":"arahan_teknis","PAKET PUBLIKASI":"paket_publikasi","ASUMSI":"asumsi"};
-  const parts=t.split(/^[ \t]*=+[ \t]*(SCRIPT|ARAHAN TEKNIS|PAKET PUBLIKASI|ASUMSI)[ \t]*=+[ \t]*$/mi);
-  if(parts.length<3){o.script=t;return o}
-  for(let i=1;i<parts.length;i+=2)o[K[parts[i].toUpperCase()]]=(parts[i+1]||"").trim();
-  if(!o.script&&parts[0].trim())o.script=parts[0].trim();
-  return o;
-}
-pushed.manual=async function(s){
-  const d=s.d||chk(await sb.from("drafts").select("*").eq("id",s.id).single()).data;
-  const mode=s.mode||(d.params&&d.params.manual)||"ideas",rv=mode==="revise";
-  const base=await mprompt(d,mode);
-  const T={ideas:"Prompt ide",script:"Prompt script",revise:"Prompt revisi"}[mode];
-  return {title:T,body:`<p class="sub" style="padding:0 16px;white-space:normal">Cara manual tanpa AI server: salin prompt, tempel di AI chat pilihanmu, lalu tempel hasilnya di langkah 2.</p>
-  <div class="gt">1. Salin prompt</div>
-  ${rv?`<div class="grp"><label class="f"><span>Perintah revisi</span><textarea id="minst" rows="2" placeholder="mis. dialog Angel dibuat lebih santai">${esc(d.instruction||"")}</textarea></label></div>`:""}
-  <button class="btn" data-act="mcopy" data-mode="${mode}" data-id="${d.id}">Salin prompt</button>
-  <div class="grp"><details id="mdet" class="f"><summary>Lihat prompt</summary><div id="mprompt" data-raw="${esc(base)}" style="white-space:pre-wrap;max-height:260px;overflow:auto;font-size:13px;margin-top:8px;word-break:break-word">${esc(base)}</div></details></div>
-  <div class="gt">2. Tempel hasil dari AI chat</div>
-  <form data-form="mres" data-id="${d.id}" data-mode="${mode}"><div class="grp"><label class="f"><span>${mode==="ideas"?"Hasil JSON dari AI chat":"Hasil dari AI chat"}</span><textarea name="res" rows="4" style="max-height:240px;overflow:auto" placeholder="Tempel di sini"></textarea></label></div><button class="btn">Simpan hasil</button></form>
-  <div class="grp"><div class="c tap" data-act="mcancel" data-id="${d.id}"><span class="red">Batal</span></div></div>`};
-};
 {const _d=pushed.draft;pushed.draft=async function(s){const r=await _d.call(pushed,s);r.body+=`<div class="grp" style="margin-top:20px"><div class="c tap" data-act="del" data-tb="drafts" data-id="${s.id}" data-n="draf ini"><span class="red">Hapus draf</span></div></div>`;return r}}
 
 /* ===== Socilift: baca screenshot, kalender planner, evaluasi performa ===== */
@@ -686,10 +673,8 @@ async function extractFlow(files){
  }catch(e){const s=$("#xs");if(s)s.textContent=e.message;toast(e.message)}
 }
 {const _e=roots.eps;roots.eps=async function(){
- const r=await _e.call(roots),tg=`<div class="vt">${[["list","Daftar"],["cal","Kalender"]].map(([k,l])=>`<button class="link vtb${epv===k?" on":""}" data-act="epv" data-v="${k}">${l}</button>`).join("")}</div>`;
- const {data:pe}=await sb.from("episodes").select("unpaid_promises");let pn=0;(pe||[]).forEach(e=>String(e.unpaid_promises||"").split(/\r?\n/).forEach(t=>{const x=pline(t);if(x&&!/^✓/.test(x))pn++}));
- const pc=`<div class="grp" style="margin:0 16px 8px"><div class="c tap ch" data-act="open" data-t="prom"><span>Pelacak janji cerita<small class="sub">${pn} janji belum terbayar</small></span></div></div>`;
- if(epv!=="cal")return {...r,body:tg+pc+r.body};
+ const r=await _e.call(roots),tg=`<div class="vt">${(()=>{const c=r.counts||{},cv=epv==="list"?(c.draf?"draf":"proses"):epv;return [["draf","Draf",c.draf],["proses","Proses",c.proses],["publish","Publish",c.publish],["cal","Kalender"]].map(([k,l,n])=>`<button class="link vtb${cv===k?" on":""}" data-act="epv" data-v="${k}">${l}${n!=null?` · ${n}`:""}</button>`).join("")})()}</div>`;
+ if(epv!=="cal")return {...r,body:tg+r.body};
  const {data:l}=chk(await sb.from("episodes").select("id,number,title,status,publish_date,assignee").order("number"));
  const y=cm.getFullYear(),m=cm.getMonth(),days=new Date(y,m+1,0).getDate(),off=(new Date(y,m,1).getDay()+6)%7,iso=d=>`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`,today=new Date().toISOString().slice(0,10),by={};
  l.forEach(e=>{if(e.publish_date)(by[e.publish_date]=by[e.publish_date]||[]).push(e)});
@@ -697,7 +682,7 @@ async function extractFlow(files){
  for(let d=1;d<=days;d++)g+=`<div class="cd${iso(d)===today?" t":""}"><b>${d}</b>${(by[iso(d)]||[]).map(e=>`<i data-act="open" data-t="ep" data-id="${e.id}">EP${e.number}</i>`).join("")}</div>`;
  const un=l.filter(e=>!e.publish_date&&!["published","analyzed"].includes(e.status));
  const row=e=>`<div class="row" data-act="open" data-t="ep" data-id="${e.id}">${av(e.title,"EP"+e.number)}<div class="mid"><div><b>${esc(e.title)}</b><small>${e.publish_date?new Date(e.publish_date+"T00:00").toLocaleDateString("id-ID",{day:"numeric",month:"short"})+" · ":""}${esc(e.assignee||"Belum ada PIC")}</small></div><span class="pill">${ES[e.status]}</span></div></div>`;
- return {...r,search:0,body:tg+pc+`<div class="cm"><button class="link" data-act="cmo" data-v="-1">‹</button><b>${cm.toLocaleDateString("id-ID",{month:"long",year:"numeric"})}</b><button class="link" data-act="cmo" data-v="1">›</button></div><div class="cal">${g}</div>
+ return {...r,search:0,body:tg+`<div class="cm"><button class="link" data-act="cmo" data-v="-1">‹</button><b>${cm.toLocaleDateString("id-ID",{month:"long",year:"numeric"})}</b><button class="link" data-act="cmo" data-v="1">›</button></div><div class="cal">${g}</div>
  <div class="gt">Belum dijadwalkan (bank ide dan workflow)</div>${un.length?un.map(row).join(""):`<div class="empty">Semua episode sudah terjadwal.</div>`}
  <p class="sub" style="margin:8px 32px;white-space:normal">Atur tanggal tayang dan PIC di dalam episode.</p>`};
 }}
@@ -713,37 +698,6 @@ pushed.dash=async function(){
  <div class="gt">Ranking${low?" (lebih rendah lebih baik)":""}</div><div class="grp">${rows.map((r,i)=>`<div class="c tap ch" data-act="open" data-t="anaep" data-id="${r.e.id}"><span>${i+1}. ${nm(r)}<div style="height:6px;border-radius:3px;background:var(--tint);width:${Math.max(4,r.v/mx*100)}%;margin-top:6px"></div></span><b>${f(r.v)}</b></div>`).join("")}</div>
  <p class="sub" style="margin:8px 32px;white-space:normal">Memakai data terbaru tiap episode pada periode yang sama. Pelajaran dari tiap video otomatis dipakai AI saat membuat script berikutnya.</p>`:`<div class="empty">Belum ada data ${cu[1].toLowerCase()} pada periode ini.<br>Tambahkan data performa di tab Analisis.</div>`)};
 };
-
-/* ===== pelacak janji cerita + cek konsistensi ===== */
-const pline=t=>t.replace(/^\s*[-*•]\s*/,"").trim();
-pushed.prom=async function(){
- const {data:l}=chk(await sb.from("episodes").select("id,number,title,unpaid_promises").order("number"));
- const last=Math.max(0,...l.map(e=>e.number)),open=[],paid=[];
- l.forEach(e=>String(e.unpaid_promises||"").split(/\r?\n/).forEach((t,i)=>{const x=pline(t);if(!x)return;const p=/^✓/.test(x);(p?paid:open).push({e,i,paid:p,t:x.replace(/^✓\s*/,"")})}));
- open.sort((a,b)=>a.e.number-b.e.number);
- const age=p=>last-p.e.number,row=p=>`<div class="c tap" data-act="ptog" data-id="${p.e.id}" data-i="${p.i}"><span>${esc(p.t)}<small class="sub">EP${p.e.number} ${esc(p.e.title)}${p.paid?"":" · menggantung "+age(p)+" episode"}</small></span><b style="font-size:13px">${p.paid?"✓ terbayar":age(p)>=3?"⚠️ lama":"belum"}</b></div>`;
- return {title:"Janji cerita",body:`<p class="sub" style="padding:0 16px;white-space:normal">Diambil dari kolom "Janji cerita yang belum terbayar" tiap episode (satu janji per baris). Ketuk janji untuk menandainya terbayar atau membatalkan tanda.</p>`+
- (open.length?`<div class="gt">Belum terbayar (${open.length})</div><div class="grp">${open.map(row).join("")}</div>`:`<div class="empty">Tidak ada janji yang menggantung.<br>Isi kolom janji cerita di tiap episode, satu per baris.</div>`)+
- (paid.length?`<div class="gt">Sudah terbayar (${paid.length})</div><div class="grp">${paid.map(row).join("")}</div>`:"")};
-};
-function consHtml(c,k,id){
- const btn=t=>`<div class="grp" style="margin-top:20px"><div class="c tap" data-act="cons" data-k="${k}" data-id="${id}"><span>${t}</span></div></div>`;
- if(!c)return btn(`🔍 Cek konsistensi dengan AI<small class="sub">Rahasia bocor, gaya bicara, kontradiksi, janji cerita</small>`);
- if(c.status==="menunggu"&&Date.now()-new Date(c.started)>6*60000)c={status:"gagal",error:"Waktu habis. Coba lagi."};
- if(c.status==="menunggu"){setTimeout(()=>{const s=cur();if(s&&s.id===id)render()},3000);return `<div class="empty">AI memeriksa konsistensi…<br>Biasanya 20–60 detik. Layar diperbarui otomatis.</div>`}
- if(c.status==="gagal")return `<div class="empty"><span class="red">${esc(c.error||"Gagal.")}</span></div>`+btn("Coba cek lagi");
- const r=c.result||{},T={tinggi:"🔴 Tinggi",sedang:"🟠 Sedang",rendah:"🟡 Rendah"},V={baik:"✅ Konsisten",perlu_perhatian:"⚠️ Perlu perhatian",bermasalah:"❌ Ada masalah serius"},li=a=>(a||[]).map(x=>"• "+x).join("\n");
- return `<div class="gt">Cek konsistensi</div><div class="grp"><div class="f"><span>Penilaian</span><b>${V[r.penilaian]||""}</b><div style="margin-top:4px">${esc(r.ringkasan||"")}</div></div>`+
- ((r.temuan||[]).map(t=>`<div class="f"><span>${T[t.tingkat]||""} · ${esc(t.jenis)}${t.bagian?" · "+esc(t.bagian):""}</span><div>${esc(t.masalah)}</div><div class="sub" style="margin-top:4px;white-space:normal">Saran: ${esc(t.saran)}</div></div>`).join("")||`<div class="f"><span>Temuan</span>Tidak ada masalah ditemukan.</div>`)+
- (r.janji_terbayar?.length?`<div class="f"><span>Janji cerita yang dibayar script ini</span><div style="white-space:pre-wrap">${esc(li(r.janji_terbayar))}</div></div>`:"")+
- (r.janji_baru?.length?`<div class="f"><span>Janji cerita baru (catat di kolom janji episode)</span><div style="white-space:pre-wrap">${esc(li(r.janji_baru))}</div></div>`:"")+
- `</div><p class="sub" style="margin:8px 32px;white-space:normal">Pemeriksaan AI berdasarkan data Anda, bukan kepastian. ${esc(c.model||"")}</p>`+btn("Cek ulang");
-}
-{const add=(name,tb,k)=>{const _o=pushed[name];pushed[name]=async function(s){
- const r=await _o.call(pushed,s),{data:d}=await sb.from(tb).select(k==="draft"?"consistency,script,status":"consistency,content,status").eq("id",s.id).single();
- if(!d||!(k==="draft"?d.script&&d.status==="script_siap":d.content&&d.status==="selesai"))return r;
- r.body+=consHtml(d.consistency,k,s.id);return r}};
- add("draft","drafts","draft");add("view","script_versions","version")}
 const H={
  async login(f,ev){
   const cred={email:f.elements.email.value.trim(),password:f.elements.password.value};
@@ -791,11 +745,11 @@ const H={
   const ids=[...f.querySelectorAll("input[name=ch]:checked")].map(x=>x.value);
   if(!ids.length)return toast("Pilih minimal satu tokoh.");
   const row=chk(await sb.from("drafts").insert({project_id:pid,character_ids:ids,params:{note:(f.elements.note.value||"").trim()||null}}).select("id").single()).data;
-  await runDraft(row.id,"ideas");stack[stack.length-1]={t:"draft",id:row.id};render(1);
+  epv="draf";await runDraft(row.id,"ideas");stack[stack.length-1]={t:"draft",id:row.id};render(1);
  },
  async idea(f){
   const id=f.dataset.id,{data:cur0}=chk(await sb.from("drafts").select("chosen").eq("id",id).single());
-  const edited=collect(f,["judul","premis","tema","konflik","hook","alur","ending","hubungan_episode_lalu"].map(k=>[k]));
+  const edited=collect(f,["judul","premis","tema","konflik","hook","alur","rangkaian_adegan","ending","hubungan_episode_lalu"].map(k=>[k]));
   chk(await sb.from("drafts").update({chosen:{...cur0.chosen,...edited}}).eq("id",id));
   await runDraft(id,"script");render();
  },
@@ -825,59 +779,10 @@ const H={
    return toast("Tersimpan sebagian. Jalankan supabase-ai-providers.sql di Supabase agar provider baru dan cadangan aktif.");
   }
   toast("Pengaturan tersimpan",1);
- },
- async mres(f){
-  const id=f.dataset.id,mode=f.dataset.mode,raw=(f.elements.res.value||"").trim();
-  if(!raw)return toast("Tempel dulu hasil dari AI chat.");
-  const {data:d}=chk(await sb.from("drafts").select("*").eq("id",id).single());
-  const params={...(d.params||{}),manual:null};
-  if(mode==="ideas"){
-   const c=mparse(raw),L=Array.isArray(c)?c:c&&c.ideas;
-   if(!Array.isArray(L)||!L.length)throw new Error("Hasil tidak berisi daftar ide. Pastikan yang ditempel JSON lengkap dari AI.");
-   chk(await sb.from("drafts").update({status:"ide_siap",ideas:L.slice(0,3),chosen:null,error:null,params,updated_at:now()}).eq("id",id));
-  }else{
-   const c=msections(raw);
-   const history=d.script?[...(d.history||[]),{script:d.script,instruksi:d.instruction,at:now()}]:(d.history||[]);
-   chk(await sb.from("drafts").update({status:"script_siap",error:null,history,script:{...c,model:"AI chat (manual)"},params,updated_at:now()}).eq("id",id));
-  }
-  toast("Hasil tersimpan",1);stack[stack.length-1]={t:"draft",id};render(1);
  }
 };
 const A={
  tab:b=>{tab=b.dataset.v;resetNav();render(3)},
- async mnew(b){
-  const f=b.closest("form"),ids=[...f.querySelectorAll("input[name=ch]:checked")].map(x=>x.value);
-  if(!ids.length)return toast("Pilih minimal satu tokoh.");
-  const row=chk(await sb.from("drafts").insert({project_id:pid,character_ids:ids,params:{note:(f.elements.note.value||"").trim()||null,manual:"ideas"}}).select("id").single()).data;
-  stack[stack.length-1]={t:"manual",id:row.id,mode:"ideas"};render(1)
- },
- async mgo(b){
-  const id=b.dataset.id,mode=b.dataset.mode;
-  const {data:d}=chk(await sb.from("drafts").select("params,chosen").eq("id",id).single());
-  const upd={params:{...(d.params||{}),manual:mode},updated_at:now()};
-  const f=document.querySelector('form[data-form="idea"]');
-  if(mode==="script"&&f&&d.chosen)upd.chosen={...d.chosen,...collect(f,["judul","premis","tema","konflik","hook","alur","ending","hubungan_episode_lalu"].map(k=>[k]))};
-  chk(await sb.from("drafts").update(upd).eq("id",id));
-  stack[stack.length-1]={t:"manual",id,mode};render(1);window.scrollTo(0,0)
- },
- async mcopy(b){
-  let t=$("#mprompt").dataset.raw,ins="";
-  if(b.dataset.mode==="revise"){
-   const e=$("#minst");ins=(e&&e.value||"").trim();
-   if(!ins)return toast("Tulis dulu perintah revisinya.");
-   t+="\n\nINSTRUKSI REVISI DARI PENGGUNA:\n"+ins;
-  }
-  try{await navigator.clipboard.writeText(t);toast("Prompt tersalin. Tempel di AI chat.",1)}
-  catch{const e=$("#mdet");if(e)e.open=true;toast("Tidak bisa menyalin otomatis. Buka Lihat prompt lalu salin manual.")}
-  if(ins)await sb.from("drafts").update({instruction:ins}).eq("id",b.dataset.id);
- },
- async mcancel(b){
-  const id=b.dataset.id,{data:d}=chk(await sb.from("drafts").select("params,script,ideas").eq("id",id).single());
-  if(d.script||(d.ideas&&d.ideas.length)){
-   chk(await sb.from("drafts").update({params:{...(d.params||{}),manual:null}}).eq("id",id));
-   stack[stack.length-1]={t:"draft",id};render(1);
-  }else{chk(await sb.from("drafts").delete().eq("id",id));back()}
- },
  wall(b){try{localStorage.setItem("kos_wall",JSON.stringify({t:"preset",v:b.dataset.v}))}catch{}applyWall();render()},
  fx(){try{localStorage.setItem("kos_fx",fxOn()?"0":"1")}catch{}initFx();render()},
  async insight(b){chk(await sb.from("insights").update({active:b.dataset.on!=="1"}).eq("id",b.dataset.id));render()},
@@ -897,28 +802,15 @@ const A={
   const ep=chk(await sb.from("episodes").insert({project_id:pid,number:n,title:ch.judul||"Tanpa judul",summary:ch.premis||null,main_conflict:ch.konflik||null,key_events:ch.alur||null,status:"approved"}).select("id").single()).data;
   chk(await sb.from("script_versions").insert({project_id:pid,episode_id:ep.id,version:1,status:"selesai",approved:true,params:{sumber:"draf"},content:d.script}));
   chk(await sb.from("drafts").update({status:"disetujui",episode_id:ep.id,updated_at:now()}).eq("id",d.id));
-  toast("Tersimpan sebagai EP"+n,1);resetNav();tab="eps";render(3);
+  toast("Tersimpan sebagai EP"+n,1);epv="proses";epAll=false;resetNav();tab="eps";render(3);
  },
  async retry(b){chk(await sb.from("script_versions").update({status:"menunggu",error:null,created_at:now()}).eq("id",b.dataset.id));await runGen(b.dataset.id);render()},
  async copy(){await navigator.clipboard.writeText($("#out").dataset.raw);toast("Tersalin",1)},
  async approve(b){if(!confirm("Setujui versi ini sebagai versi final?"))return;chk(await sb.from("script_versions").update({approved:true}).eq("id",b.dataset.id));toast("Versi disetujui",1);render()},
  vtab:b=>{vtab=b.dataset.v;render()},
- epv:b=>{epv=b.dataset.v;delete cache.eps;render()},
+ epv:b=>{epv=b.dataset.v;epAll=false;delete cache.eps;render()},epall:()=>{epAll=!epAll;delete cache.eps;render()},
  cmo:b=>{cm=new Date(cm.getFullYear(),cm.getMonth()+ +b.dataset.v,1);delete cache.eps;render()},
  dper:b=>{dper=b.dataset.v;render()},
- async ptog(b){
-  const {data:e}=chk(await sb.from("episodes").select("unpaid_promises").eq("id",b.dataset.id).single());
-  const L=String(e.unpaid_promises||"").split(/\r?\n/),i=+b.dataset.i,t=L[i];
-  L[i]=/^\s*[-*•]?\s*✓/.test(t)?t.replace(/^(\s*[-*•]?\s*)✓\s*/,"$1"):t.replace(/^(\s*[-*•]?\s*)/,"$1✓ ");
-  chk(await sb.from("episodes").update({unpaid_promises:L.join("\n")}).eq("id",b.dataset.id));render()
- },
- async cons(b){
-  const tb=b.dataset.k==="draft"?"drafts":"script_versions",id=b.dataset.id,{data:{session}}=await sb.auth.getSession();
-  chk(await sb.from(tb).update({consistency:{status:"menunggu",started:now()}}).eq("id",id));
-  try{const r=await fetch("/.netlify/functions/check-consistency-background",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify({kind:b.dataset.k,id})});if(!r.ok)throw new Error("HTTP "+r.status)}
-  catch(e){await sb.from(tb).update({consistency:{status:"gagal",error:"Fungsi server tidak dapat dijalankan ("+e.message+"). Pastikan deploy lewat Netlify."}}).eq("id",id)}
-  render()
- },
  dmet:b=>{dmet=b.dataset.v;render()},
  open:b=>nav({t:b.dataset.t,id:b.dataset.id||null,i:b.dataset.i}),
  back:()=>back(),
@@ -984,7 +876,7 @@ function initFx(){
   const h=document.documentElement,ua=navigator.userAgent,ok=/Chrome\//.test(ua)&&!/iPhone|iPad|iPod/.test(ua);
   if(ok&&fxOn()){try{const m=$("#lensmap");if(!m.getAttribute("href"))m.setAttribute("href",lensMap());h.classList.add("fx")}catch{h.classList.remove("fx")}}else h.classList.remove("fx");
 }
-const INSTANT=new Set(["mcopy","tab","back","vtab","cancel","edit","unpick","open","wall","fx","epv","cmo","dper","dmet"]);
+const INSTANT=new Set(["tab","back","vtab","cancel","edit","unpick","open","wall","fx","epv","epall","cmo","dper","dmet"]);
 document.addEventListener("submit",async ev=>{ev.preventDefault();const f=ev.target;if(!H[f.dataset.form])return;
   const btn=ev.submitter||f.querySelector("button.btn")||(f.id&&document.querySelector('button[form="'+f.id+'"]'));
   if(btn&&btn.classList.contains("busy"))return;
@@ -998,11 +890,238 @@ document.addEventListener("change",async ev=>{
   catch(e){toast("Foto tidak bisa dipakai: "+(e.name==="QuotaExceededError"?"penyimpanan penuh":"format tidak didukung"))}
 });
 document.addEventListener("change",ev=>{if(ev.target.id!=="xfile")return;const fs=[...ev.target.files];ev.target.value="";if(fs.length)extractFlow(fs)});
-const grow=t=>{t.style.height="auto";t.style.height=Math.max(96,t.scrollHeight)+"px"};
-try{new MutationObserver(()=>document.querySelectorAll(".f textarea").forEach(grow)).observe(document.getElementById("app"),{childList:true,subtree:true})}catch{}
-document.addEventListener("input",ev=>{if(ev.target.matches(".f textarea"))grow(ev.target)});
-document.addEventListener("focusin",ev=>{const t=ev.target;if(t.matches(".f input,.f textarea"))setTimeout(()=>t.scrollIntoView({block:"center",behavior:"smooth"}),350)});
 document.addEventListener("input",ev=>{if(ev.target.id!=="q")return;const q=ev.target.value.toLowerCase();document.querySelectorAll(".row").forEach(r=>r.style.display=r.textContent.toLowerCase().includes(q)?"":"none")});
+/* ===== Mode manual: pakai chat AI lain (salin prompt, tempel hasil) ===== */
+const MJSON="Balas HANYA dengan satu objek JSON yang valid, tanpa teks lain dan tanpa blok markdown.";
+const X_PROMPT=`Kamu membaca screenshot atau frame rekaman layar Instagram Insights (bahasa Indonesia atau Inggris) untuk SATU Reels. Gambar terlampir di chat ini.
+Aturan: ambil HANYA angka yang terlihat jelas. Jangan menebak atau menghitung sendiri; jika tidak terlihat isi null. Persen ditulis sebagai angka tanpa tanda %. Ubah "1,2 rb" atau "1.2K" menjadi 1200, "jt" menjadi juta. Waktu tonton dalam detik.
+Untuk rate (skip_rate, share_rate, like_rate, save_rate, repost_rate, comment_rate) isi persen jika tampil. Kunci *_cmp berisi "lebih_rendah" atau "lebih_tinggi" hanya jika Instagram menampilkan pembanding dari biasanya, selain itu null.
+Keluarkan JSON dengan kunci: skip_rate, skip_rate_cmp, share_rate, share_rate_cmp, like_rate, like_rate_cmp, save_rate, save_rate_cmp, repost_rate, repost_rate_cmp, comment_rate, comment_rate_cmp, views, reach, avg_watch_sec, retention_3s, profile_visits, follows, period ("24j", "48j", "7h", atau null), retention_note (ringkas dari grafik retensi jika terlihat, atau null), catatan (hal yang tidak terbaca atau meragukan).
+${MJSON}`;
+const A_RULES=`Kamu analis performa konten Instagram Reels untuk serial @kevin_k.w. Analisis performa SATU episode dari data yang dimasukkan pengguna, lalu temukan apa yang kurang dari script dan bagaimana menyempurnakan script berikutnya.
+Aturan:
+- Pakai HANYA data di bawah. Jangan mengarang metrik. Metrik yang tidak ada berarti tidak diisi (bukan nol).
+- Rate adalah persen dari Instagram. Untuk "Jumlah lewati" (skip rate), LEBIH RENDAH = LEBIH BAIK. Pembanding "lebih rendah/lebih tinggi" adalah dibanding rata-rata akun menurut Instagram.
+- Bedakan FAKTA (dari data), HIPOTESIS (dugaan penyebab), dan REKOMENDASI. Jangan menyimpulkan sebab-akibat dari korelasi sederhana. Nilai keterbatasan sampel (satu video, satu periode ukur). Jangan menyarankan perubahan strategi besar karena satu video viral atau gagal.
+- Hubungkan temuan dengan bagian script (hook, struktur, konflik, dialog, ending, durasi). Rujuk detail script secara singkat dan jelaskan apa yang kurang beserta saran konkret.
+- Bandingkan dengan video lain hanya jika periode ukurnya sama. Jika tidak ada pembanding, katakan terus terang.
+Keluarkan JSON dengan kunci:
+"ringkasan" (string), "menonjol" (array string), "berjalan_baik" (array), "perlu_diperbaiki" (array; tiap item menyebut bagian script, apa yang kurang, dan saran konkret), "kemungkinan_penyebab" (array; tiap item diawali "Hipotesis:"), "perbandingan" (string), "keyakinan" (objek {"tingkat":"rendah|sedang|tinggi","alasan":string}), "eksperimen" (array untuk video berikutnya), "jangan_diubah" (array hal yang belum cukup bukti untuk diubah), "insights" (array maksimal 5 objek {"teks","keyakinan":"rendah|sedang|tinggi","rekomendasi","status":"hipotesis"}; ringkas dan siap dipakai saat menulis script berikutnya).
+Gunakan teks biasa tanpa markdown.
+${MJSON}`;
+const M_LABEL={skip_rate:"Jumlah lewati / skip rate (%)",share_rate:"Jumlah bagikan (% dari jangkauan)",like_rate:"Jumlah suka (%)",save_rate:"Jumlah simpan (%)",repost_rate:"Jumlah posting ulang (%)",comment_rate:"Jumlah komentar (%)",views:"Tayangan",reach:"Akun terjangkau",avg_watch_sec:"Rata-rata waktu tonton (detik)",retention_3s:"Masih menonton di detik 3 (%)",profile_visits:"Kunjungan profil",follows:"Follow dari konten",retention_note:"Catatan grafik retensi"};
+const mClean=o=>Object.fromEntries(Object.entries(o||{}).filter(([k,v])=>v&&!["id","project_id","created_at","updated_at"].includes(k)));
+const mReadable=m=>Object.fromEntries(Object.entries(m||{}).map(([k,v])=>k.endsWith("_cmp")?[(M_LABEL[k.replace("_cmp","")]||k)+" - pembanding Instagram",String(v).replace("_"," ")+" dari biasanya"]:[M_LABEL[k]||k,v]));
+function jRepair(t){
+ let s=String(t||"").replace(/^\uFEFF/,"").trim().replace(/^```(?:json)?\s*|\s*```$/g,"");
+ const a=s.indexOf("{");if(a<0)throw new Error("tidak ada {");
+ s=s.slice(a).replace(/[\u201C\u201D]/g,'"').replace(/\u00A0/g," ");
+ const n=s.length,st=[];let o="",inS=false,ec=false;
+ const nextTok=j=>{while(j<n&&/\s/.test(s[j]))j++;return j};
+ for(let i=0;i<n;i++){
+  const c=s[i];
+  if(inS){
+   if(ec){o+=c;ec=false;continue}
+   if(c==="\\"){const x=s[i+1];if(x&&/["\\\/bfnrtu]/.test(x)){o+=c;ec=true}else o+="\\\\";continue}
+   if(c==="\n"){o+="\\n";continue}
+   if(c==="\r")continue;
+   if(c==="\t"){o+="\\t";continue}
+   if(c==='"'){
+    const j=nextTok(i+1),x=s[j];let close=false;
+    if(x===undefined||x==="}"||x==="]"||x===":")close=true;
+    else if(x===","){const k=nextTok(j+1),y=s[k]||"";close=/["{}\[\]\-\d]/.test(y)||/^(true|false|null)\b/.test(s.slice(k,k+5))}
+    if(close){inS=false;o+=c}else o+='\\"';
+    continue}
+   o+=c;continue}
+  if(c==='"'){inS=true;o+=c;continue}
+  if(c==="{"||c==="[")st.push(c);
+  if(c==="}"||c==="]")st.pop();
+  o+=c;
+  if(!st.length)break;
+ }
+ if(inS)o+='"';
+ o=o.replace(/,(\s*[}\]])/g,"$1");
+ while(st.length)o+=st.pop()==="{"?"}":"]";
+ return JSON.parse(o);
+}
+function mParse(raw){
+ const t=String(raw||"").trim().replace(/^```(?:json)?\s*|\s*```$/g,"");
+ try{return JSON.parse(t)}catch{}
+ const a=t.indexOf("{"),b=t.lastIndexOf("}");
+ if(a>=0&&b>a){try{return JSON.parse(t.slice(a,b+1))}catch{}}
+ try{return jRepair(t)}catch{}
+ throw new Error("bukan JSON");
+}
+async function mCopy(text){
+ try{await navigator.clipboard.writeText(text);return true}catch{}
+ try{const t=document.createElement("textarea");t.value=text;t.style.cssText="position:fixed;top:0;left:0;opacity:0";document.body.appendChild(t);t.focus();t.select();const ok=document.execCommand("copy");t.remove();return ok}catch{return false}
+}
+/*PROMPTS:START*/
+const P_BASE="Kamu adalah creative director, penulis naskah, dan sutradara serial Instagram Reels (vertikal 9:16) berbahasa Indonesia untuk akun @kevin_k.w.\nAturan:\n- Pakai HANYA data di bawah. Jangan mengarang karakter, fakta, atau episode. Jika informasi penting tidak ada, tulis \"belum ditentukan\" dan catat sebagai asumsi.\n- Dialog natural, bahasa percakapan Indonesia sesuai gaya bicara tiap karakter. Hindari pidato motivasi dan penjelasan emosi yang sudah terlihat dari aksi.\n- Jangan membocorkan rahasia karakter sebelum waktunya. Jaga konsistensi dengan profil karakter, Brand DNA, dan episode sebelumnya. Jangan ulangi konflik tanpa perkembangan baru.\n- Hook harus dibayar oleh isi cerita (bukan clickbait). Tidak semua episode harus cliffhanger.\n- Produksi realistis (smartphone, tripod, mikrofon, lampu sederhana); beri alternatif bila alat terbatas. Musik hanya yang berlisensi atau bebas royalti.\n- Jangan menyalin karya kreator lain.\n- Jika ada PEMBELAJARAN dari analisis performa, terapkan yang relevan dan jelaskan singkat pengaruhnya: pada tugas ide, sebutkan di kunci \"alasan\" tiap ide; pada tugas script, tambahkan baris berawalan \"Pembelajaran dipakai:\" di kunci \"asumsi\". Perlakukan pembelajaran berstatus hipotesis sebagai uji coba, bukan kepastian.",P_IDEAS="TUGAS: usulkan TEPAT 3 ide episode yang berbeda (variasi konflik, hook, dan ending) untuk tokoh terpilih. Jangan hanya mengejar yang paling viral; pertimbangkan konsistensi serial dan identitas brand.\n\nATURAN VISUAL (wajib, supaya episode terasa seperti film pendek profesional, bukan video orang ngobrol):\n- Dilarang membuat seluruh episode berupa dua tokoh duduk berhadapan atau bersebelahan sambil bercerita. Dialog boleh jadi tulang punggung, tetapi cerita harus DITUNJUKKAN lewat adegan, bukan hanya diceritakan lewat omongan.\n- Setiap ide wajib punya minimal 3 adegan visual yang berbeda (lokasi, aktivitas, atau waktu berbeda). Boleh berupa: adegan masa kini (aktivitas nyata tokoh saat bicara), flashback atau kejadian yang diceritakan lalu diperagakan, montase singkat, insert detail benda, atau adegan B-roll di tempat lain.\n- Bila tokoh menceritakan sebuah kejadian (misalnya ditolak kerja), tampilkan kejadiannya sebagai adegan sendiri (misalnya: tokoh menyerahkan lamaran, menunggu di ruang tunggu, lalu menerima penolakan), lalu kembali ke adegan percakapan. Jangan hanya mengandalkan dialog untuk menjelaskannya.\n- Adegan percakapan pun harus diberi aktivitas yang relevan dengan cerita dan karakter (misalnya memasak, merapikan barang, berjalan, mengendarai motor, mencuci piring, menunggu antrean, mengetik lamaran) sehingga posisi tokoh dan sudut kamera berganti-ganti. Aktivitas harus mendukung emosi atau konflik, bukan hiasan acak.\n- Variasikan ukuran dan sudut shot antar adegan (wide, medium, close up, insert, over the shoulder, kamera mengikuti sambil berjalan) dan ritme potongannya.\n- Tetap realistis untuk produksi smartphone dan kru kecil: pakai lokasi yang mudah diakses (rumah, jalan depan rumah, warung, kamar, ruang tunggu, halaman), properti sederhana, dan jumlah pemeran sedikit. Jangan mengarang lokasi atau properti yang tidak masuk akal bagi data tokoh dan Brand DNA. Bila detail tidak ada di data, tulis \"belum ditentukan\".\n- Jaga durasi Reels: perkirakan jumlah adegan dan waktu per adegan agar muat dalam durasi pendek. Lebih baik 3 sampai 5 adegan singkat yang padat daripada banyak adegan yang tergesa.\n\nKeluarkan JSON {\"ideas\":[...]} berisi 3 objek. Tiap objek punya kunci string: judul, premis, tema, target_audiens, masalah, karakter, konflik, hook, alur, rangkaian_adegan, ending, hubungan_episode_lalu, tujuan_awareness, potensi_produksi, alasan; dan kunci \"skor\" berisi angka 1-10 untuk: relevansi_audiens, kekuatan_hook, potensi_retensi, shareability, orisinalitas, konsistensi_karakter, kesesuaian_brand, kemudahan_produksi. Skor hanya estimasi AI, bukan prediksi performa.\nIsi \"rangkaian_adegan\" berupa daftar bernomor, satu baris per adegan, dengan pola: nomor. LOKASI dan waktu | aktivitas tokoh yang terlihat | fungsi adegan dalam cerita | perkiraan durasi detik. Contoh pola (hanya ilustrasi format, jangan disalin): 1. Teras rumah, sore | A mencuci motor sambil bercerita ke B | membuka hook | 5 dtk; 2. Kantor kecil, siang (flashback) | A menyerahkan lamaran lalu ditolak HRD | memperagakan masalah | 8 dtk. Setiap ide harus punya rangkaian adegan yang berbeda satu sama lain, bukan hanya beda judul.",P_SCRIPT="TUGAS: tulis script episode lengkap dari hook sampai ending berdasarkan ide yang sudah disetujui pengguna (ikuti idenya, jangan diganti).\nJika ide memuat \"rangkaian_adegan\", tulis SETIAP adegan di dalamnya sebagai SCENE tersendiri lengkap dengan lokasi, aktivitas tokoh, dan shot-nya, dan jangan menggabungkannya menjadi satu adegan duduk berbicara. Bila tidak ada, rancang sendiri minimal 3 adegan yang berbeda lokasi atau aktivitasnya. Adegan flashback atau kejadian yang diceritakan harus diperagakan secara visual, bukan hanya diucapkan.\nSTANDAR PRODUKSI (wajib):\nTulis seperti dokumen produksi film pendek profesional yang bisa langsung dipakai kru kecil di lokasi tanpa bertanya lagi. Lengkap, spesifik, dan bisa dieksekusi, bukan deskripsi umum.\n- Setiap shot punya: nomor, rentang waktu (m:ss–m:ss), ukuran shot (Wide, MS, CU, insert), nomor setup kamera, aksi visual, dialog, suara, dan transisi keluar.\n- Rentang waktu shot harus berurutan tanpa celah dan total persis sama dengan durasi di Lembar Informasi. Insert yang menumpuk pada shot lain harus dinyatakan \"mengganti sebagian durasi, bukan menambah\".\n- Dialog: kecepatan wajar sekitar 2–3 kata per detik. Hitung muatan tiap shot supaya muat di durasinya. Frame pertama langsung beraksi atau berdialog.\n- Variasi visual: hindari seluruh episode berupa dua orang duduk berhadapan. Pecah cerita menjadi beberapa SCENE dengan lokasi atau aktivitas berbeda, perankan kejadian yang diceritakan tokoh (flashback atau adegan langsung), beri tokoh aktivitas yang relevan saat berdialog, dan selingi dengan insert detail benda. Setiap pergantian scene dicatat di Ringkasan waktu, termasuk aturan 180 derajat dan kontinuitas yang berlaku per scene.\n- Aksi hanya hal yang terlihat atau terdengar kamera. Jangan menulis pikiran batin tokoh. Emosi ditunjukkan lewat aksi, properti, jeda, dan nada, bukan dijelaskan.\n- Konsistensi: aturan 180 derajat, posisi kiri/kanan frame tiap tokoh, properti di tangan mana, wardrobe, level minuman, dan kondisi cahaya harus sama dari shot ke shot dan dicatat di Checklist Kontinuitas.\n- Komposisi vertikal 9:16: sisakan ruang kosong untuk caption dan jauhkan wajah dan aksi penting dari zona UI Instagram (bagian bawah sekitar 20 persen dan tepi kanan).\n- Jenis potongan ditulis jelas (hard cut, L-cut, J-cut, match on action) dan jeda hening yang sengaja dipertahankan disebut.\n- Suara: tentukan ambient yang dijaga, room tone, mic, target loudness. Musik hanya bila ada di data, dan harus berlisensi atau bebas royalti.\n- Spesifikasi teknis nyata untuk smartphone dan tripod: resolusi, fps, shutter, ISO maksimum, white balance (Kelvin), kunci AE/AF, tanpa digital zoom, serta arah, suhu warna, dan fungsi cahaya (key, fill, praktikal).\n- Rencana syuting berurutan dari setup paling efisien, jumlah take per setup, room tone, dan estimasi waktu total.\n- Beri alternatif bila alat atau lokasi terbatas (tanpa mic clip-on, tanpa lampu tambahan, tanpa tripod, satu kamera, lokasi cadangan).\n- Konten komersial (afiliasi, endorse, kerja sama) hanya jika ada di data. Bila ada, tandai terang-terangan di dialog atau caption, jangan menyebut nilai komisi atau klaim yang tidak bisa dibuktikan, dan jangan membacakan atau mengutip isi karya berhak cipta. Bila topik sensitif (misalnya depresi), tambahkan peringatan singkat di caption.\n- Jangan mengarang fakta. Nomor episode, angka, nama tempat, dan detail yang tidak ada di data ditulis \"belum ditentukan\" dan dicatat di asumsi. Angka atau lelucon yang hanya properti dialog dicatat sebagai bukan fakta.\n\nFORMAT TEKS (ikuti persis, markdown ringan):\n- \"# \" untuk judul dokumen, \"## \" untuk bagian bernomor, \"### \" untuk judul shot.\n- \"- \" untuk poin. Teks tebal dengan **tebal**, miring dengan *miring*. Garis pemisah antar shot dengan baris \"---\".\n- Dialog satu baris per ucapan dengan pola: NAMA (ekspresi atau nada) kalimat. NAMA huruf kapital, ekspresi dalam kurung boleh dihilangkan. Contoh: YUSUF (ceria, heboh) Weh, Vin! Ditolak lagi!\n- Judul shot memakai pola: ### SHOT 1 · 0:00–0:04 · MS two-shot · Setup A. Insert memakai: ### INSERT 3A · 0:10.8–0:12.3 · CU layar HP · Setup E.\n- Judul adegan memakai pola: **SCENE 1. EXT. LOKASI — MALAM**.\n- Jangan memakai tabel, blok kode, atau emoji.\n\nKeluarkan JSON dengan 4 kunci bertipe string. Isi tiap kunci adalah teks berformat di atas. Penomoran bagian dimulai dari 1 di dalam tiap kunci.\n\n\"script\" berisi:\n# Judul Episode\n*Naskah Produksi (Shooting Script) · Serial Reels @kevin_k.w · Episode N, lanjutan Episode sebelumnya jika ada*\n## 1. Lembar Informasi\nPoin: Format (rasio, resolusi, jenis konten), Durasi, Tokoh, Lokasi (INT/EXT, tempat, waktu), Gaya visual, Musik, Konten komersial. Lalu paragraf **Logline:** dan **Inti cerita:** (konflik, apa yang sengaja tidak ada seperti pidato atau kesimpulan moral).\n## 2. Tokoh, Wardrobe, dan Properti\nSatu paragraf per tokoh diawali **NAMA** — cara bicara, kebiasaan fisik, panggilan antar tokoh, wardrobe lengkap. Lalu **Properti:** dengan poin tiap benda beserta kondisi dan hal yang harus terbaca atau tidak boleh terbaca kamera.\n## 3. Naskah Adegan\nJudul adegan, paragraf kondisi awal (cahaya, suara lokasi, posisi tokoh, benda di tangan), **Ringkasan waktu:** berupa poin daftar semua shot dengan rentang waktu dan ukuran. Lalu tiap shot: judul shot, satu baris tekanan atau tujuan shot bila perlu, aksi, dialog, poin \"Suara:\" dan \"Transisi keluar:\", lalu \"---\". Akhiri dengan instruksi tahan akhir dan larangan (misalnya tanpa teks, tanpa musik, tanpa kesimpulan moral) bila relevan. Struktur cerita (hook, konflik, eskalasi, payoff, ending) harus terbaca dari urutan shot, tanpa label struktur di dalam naskah.\n\n\"arahan_teknis\" berisi bagian:\n## 1. Lokasi dan Blocking (denah teks sederhana, posisi tokoh kiri atau kanan frame, garis 180 derajat, tinggi dan jarak kamera, ruang kosong, zona UI Instagram)\n## 2. Spesifikasi Teknis (**Kamera:**, **Cahaya:**, **Suara:** masing-masing dengan poin)\n## 3. Rencana Syuting (urutan setup bernomor, jumlah take, room tone, estimasi waktu)\n## 4. Panduan Editing, Suara, dan Warna (jenis tiap potongan, jeda yang dipertahankan, mixing dan target LUFS, color grading, tanpa atau dengan efek dan teks)\n## 5. Checklist Kontinuitas (poin yang bisa dicentang kru)\n## 6. Alternatif Bila Alat Terbatas\n\n\"paket_publikasi\" berisi:\n## 1. Judul atau Opening Text (3 alternatif)\n## 2. Caption (siap tempel)\n## 3. Kepatuhan (penandaan afiliasi atau kerja sama bila ada, peringatan konten sensitif, hal yang tidak boleh disebut)\n## 4. Cover, Kata Kunci, Hashtag, dan Komentar (teks cover, kata kunci, hashtag seperlunya, komentar natural untuk dipancing bukan engagement bait)\n## 5. Hipotesis Performa (hal yang diuji, ditulis sebagai hipotesis)\n\n\"asumsi\": daftar asumsi dan hal yang belum ditentukan, satu poin \"- \" per baris.",P_REVISE="TUGAS: revisi script saat ini sesuai instruksi pengguna. Ubah hanya yang diminta dan pertahankan bagian lain. Tetap patuhi aturan di atas.\nSTANDAR PRODUKSI (wajib):\nTulis seperti dokumen produksi film pendek profesional yang bisa langsung dipakai kru kecil di lokasi tanpa bertanya lagi. Lengkap, spesifik, dan bisa dieksekusi, bukan deskripsi umum.\n- Setiap shot punya: nomor, rentang waktu (m:ss–m:ss), ukuran shot (Wide, MS, CU, insert), nomor setup kamera, aksi visual, dialog, suara, dan transisi keluar.\n- Rentang waktu shot harus berurutan tanpa celah dan total persis sama dengan durasi di Lembar Informasi. Insert yang menumpuk pada shot lain harus dinyatakan \"mengganti sebagian durasi, bukan menambah\".\n- Dialog: kecepatan wajar sekitar 2–3 kata per detik. Hitung muatan tiap shot supaya muat di durasinya. Frame pertama langsung beraksi atau berdialog.\n- Variasi visual: hindari seluruh episode berupa dua orang duduk berhadapan. Pecah cerita menjadi beberapa SCENE dengan lokasi atau aktivitas berbeda, perankan kejadian yang diceritakan tokoh (flashback atau adegan langsung), beri tokoh aktivitas yang relevan saat berdialog, dan selingi dengan insert detail benda. Setiap pergantian scene dicatat di Ringkasan waktu, termasuk aturan 180 derajat dan kontinuitas yang berlaku per scene.\n- Aksi hanya hal yang terlihat atau terdengar kamera. Jangan menulis pikiran batin tokoh. Emosi ditunjukkan lewat aksi, properti, jeda, dan nada, bukan dijelaskan.\n- Konsistensi: aturan 180 derajat, posisi kiri/kanan frame tiap tokoh, properti di tangan mana, wardrobe, level minuman, dan kondisi cahaya harus sama dari shot ke shot dan dicatat di Checklist Kontinuitas.\n- Komposisi vertikal 9:16: sisakan ruang kosong untuk caption dan jauhkan wajah dan aksi penting dari zona UI Instagram (bagian bawah sekitar 20 persen dan tepi kanan).\n- Jenis potongan ditulis jelas (hard cut, L-cut, J-cut, match on action) dan jeda hening yang sengaja dipertahankan disebut.\n- Suara: tentukan ambient yang dijaga, room tone, mic, target loudness. Musik hanya bila ada di data, dan harus berlisensi atau bebas royalti.\n- Spesifikasi teknis nyata untuk smartphone dan tripod: resolusi, fps, shutter, ISO maksimum, white balance (Kelvin), kunci AE/AF, tanpa digital zoom, serta arah, suhu warna, dan fungsi cahaya (key, fill, praktikal).\n- Rencana syuting berurutan dari setup paling efisien, jumlah take per setup, room tone, dan estimasi waktu total.\n- Beri alternatif bila alat atau lokasi terbatas (tanpa mic clip-on, tanpa lampu tambahan, tanpa tripod, satu kamera, lokasi cadangan).\n- Konten komersial (afiliasi, endorse, kerja sama) hanya jika ada di data. Bila ada, tandai terang-terangan di dialog atau caption, jangan menyebut nilai komisi atau klaim yang tidak bisa dibuktikan, dan jangan membacakan atau mengutip isi karya berhak cipta. Bila topik sensitif (misalnya depresi), tambahkan peringatan singkat di caption.\n- Jangan mengarang fakta. Nomor episode, angka, nama tempat, dan detail yang tidak ada di data ditulis \"belum ditentukan\" dan dicatat di asumsi. Angka atau lelucon yang hanya properti dialog dicatat sebagai bukan fakta.\n\nFORMAT TEKS (ikuti persis, markdown ringan):\n- \"# \" untuk judul dokumen, \"## \" untuk bagian bernomor, \"### \" untuk judul shot.\n- \"- \" untuk poin. Teks tebal dengan **tebal**, miring dengan *miring*. Garis pemisah antar shot dengan baris \"---\".\n- Dialog satu baris per ucapan dengan pola: NAMA (ekspresi atau nada) kalimat. NAMA huruf kapital, ekspresi dalam kurung boleh dihilangkan. Contoh: YUSUF (ceria, heboh) Weh, Vin! Ditolak lagi!\n- Judul shot memakai pola: ### SHOT 1 · 0:00–0:04 · MS two-shot · Setup A. Insert memakai: ### INSERT 3A · 0:10.8–0:12.3 · CU layar HP · Setup E.\n- Judul adegan memakai pola: **SCENE 1. EXT. LOKASI — MALAM**.\n- Jangan memakai tabel, blok kode, atau emoji.\n\nKeluarkan JSON dengan 4 kunci bertipe string. Isi tiap kunci adalah teks berformat di atas. Penomoran bagian dimulai dari 1 di dalam tiap kunci.\n\n\"script\" berisi:\n# Judul Episode\n*Naskah Produksi (Shooting Script) · Serial Reels @kevin_k.w · Episode N, lanjutan Episode sebelumnya jika ada*\n## 1. Lembar Informasi\nPoin: Format (rasio, resolusi, jenis konten), Durasi, Tokoh, Lokasi (INT/EXT, tempat, waktu), Gaya visual, Musik, Konten komersial. Lalu paragraf **Logline:** dan **Inti cerita:** (konflik, apa yang sengaja tidak ada seperti pidato atau kesimpulan moral).\n## 2. Tokoh, Wardrobe, dan Properti\nSatu paragraf per tokoh diawali **NAMA** — cara bicara, kebiasaan fisik, panggilan antar tokoh, wardrobe lengkap. Lalu **Properti:** dengan poin tiap benda beserta kondisi dan hal yang harus terbaca atau tidak boleh terbaca kamera.\n## 3. Naskah Adegan\nJudul adegan, paragraf kondisi awal (cahaya, suara lokasi, posisi tokoh, benda di tangan), **Ringkasan waktu:** berupa poin daftar semua shot dengan rentang waktu dan ukuran. Lalu tiap shot: judul shot, satu baris tekanan atau tujuan shot bila perlu, aksi, dialog, poin \"Suara:\" dan \"Transisi keluar:\", lalu \"---\". Akhiri dengan instruksi tahan akhir dan larangan (misalnya tanpa teks, tanpa musik, tanpa kesimpulan moral) bila relevan. Struktur cerita (hook, konflik, eskalasi, payoff, ending) harus terbaca dari urutan shot, tanpa label struktur di dalam naskah.\n\n\"arahan_teknis\" berisi bagian:\n## 1. Lokasi dan Blocking (denah teks sederhana, posisi tokoh kiri atau kanan frame, garis 180 derajat, tinggi dan jarak kamera, ruang kosong, zona UI Instagram)\n## 2. Spesifikasi Teknis (**Kamera:**, **Cahaya:**, **Suara:** masing-masing dengan poin)\n## 3. Rencana Syuting (urutan setup bernomor, jumlah take, room tone, estimasi waktu)\n## 4. Panduan Editing, Suara, dan Warna (jenis tiap potongan, jeda yang dipertahankan, mixing dan target LUFS, color grading, tanpa atau dengan efek dan teks)\n## 5. Checklist Kontinuitas (poin yang bisa dicentang kru)\n## 6. Alternatif Bila Alat Terbatas\n\n\"paket_publikasi\" berisi:\n## 1. Judul atau Opening Text (3 alternatif)\n## 2. Caption (siap tempel)\n## 3. Kepatuhan (penandaan afiliasi atau kerja sama bila ada, peringatan konten sensitif, hal yang tidak boleh disebut)\n## 4. Cover, Kata Kunci, Hashtag, dan Komentar (teks cover, kata kunci, hashtag seperlunya, komentar natural untuk dipancing bukan engagement bait)\n## 5. Hipotesis Performa (hal yang diuji, ditulis sebagai hipotesis)\n\n\"asumsi\": daftar asumsi dan hal yang belum ditentukan, satu poin \"- \" per baris.";
+/*PROMPTS:END*/
+const P_JSON="\n\nBalas HANYA dengan satu objek JSON yang valid, tanpa teks lain dan tanpa blok markdown. Di dalam setiap string, tulis baris baru sebagai \\n (jangan Enter sungguhan) dan tanda kutip ganda sebagai \\\". Pastikan JSON ditutup lengkap sampai tanda } terakhir.";
+async function draftCtx(ids,note){
+ const br=chk(await sb.from("brand_profiles").select("data").eq("project_id",pid).limit(1)).data;
+ const chars=ids&&ids.length?chk(await sb.from("characters").select("*").in("id",ids)).data:[];
+ const prev=chk(await sb.from("episodes").select("number,title,summary,main_conflict,key_events,new_info,relationship_changes,unpaid_promises,cliffhanger").eq("project_id",pid).order("number",{ascending:false}).limit(5)).data||[];
+ let ins=[];try{ins=chk(await sb.from("insights").select("teks,rekomendasi,keyakinan,status").eq("project_id",pid).eq("active",true).order("created_at",{ascending:false}).limit(10)).data||[]}catch{}
+ return `DATA BRAND DNA (kosong berarti belum ditentukan):\n${JSON.stringify(mClean(br&&br[0]&&br[0].data))}\n\nTOKOH YANG TAMPIL:\n${JSON.stringify(chars.map(mClean))}\n\n5 EPISODE TERAKHIR (terbaru dulu, bisa kosong jika ini episode pertama):\n${JSON.stringify(prev.map(mClean))}\n\nPEMBELAJARAN DARI ANALISIS PERFORMA (aktif, bisa kosong):\n${JSON.stringify(ins)}\n\nARAH DARI PENGGUNA (opsional): ${note||"-"}`;
+}
+async function manualDraftPrompt(mode,o){
+ const ctx=await draftCtx(o.ids,o.note),idea=`\n\nIDE YANG DISETUJUI PENGGUNA:\n${JSON.stringify(o.chosen)}`;
+ const body=mode==="ideas"?`${P_BASE}\n${P_IDEAS}\n\n${ctx}`:mode==="script"?`${P_BASE}\n${P_SCRIPT}\n\n${ctx}${idea}`:`${P_BASE}\n${P_REVISE}\n\n${ctx}${idea}\n\nSCRIPT SAAT INI:\n${JSON.stringify(o.script)}\n\nINSTRUKSI REVISI DARI PENGGUNA:\n${o.instruction}`;
+ return body+P_JSON;
+}
+const pbox=(copies,save,id,lbl)=>`<div class="gt">Tanpa API: pakai chat AI lain</div><div class="grp">${copies.map(([a,t,sb_])=>`<div class="c tap" data-act="${a}" data-id="${id||""}"><span>${t}<small class="sub" style="white-space:normal">${sb_}</small></span></div><div class="c tap" data-act="${a.replace("pcopy","pdl")}" data-id="${id||""}"><span style="font-size:14px;color:var(--mute)">↓ Unduh sebagai file .txt</span></div>`).join("")}<label class="f" id="pprompt-wrap" style="display:none"><span>Salin manual dari kotak ini</span><textarea id="pprompt" rows="4" readonly></textarea></label><label class="f"><span>Tempel hasil JSON dari chat AI</span><textarea id="ppaste" rows="6"></textarea></label><div class="c tap" data-act="${save}" data-id="${id||""}"><span style="color:var(--tintd);font-weight:600">${lbl}</span></div></div>`;
+let PDL=0;
+function dlTxt(name,text){
+ try{
+  const u=URL.createObjectURL(new Blob(["\uFEFF"+text],{type:"text/plain;charset=utf-8"})),a=document.createElement("a");
+  a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000);
+  toast("File "+name+" diunduh",1);
+ }catch(e){toast("Gagal mengunduh. Coba tombol Salin.")}
+}
+const slug=t=>String(t||"naskah").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40)||"naskah";
+function plainTxt(raw){
+ return String(raw||"").split(/\r?\n/).map(l=>{
+  const t=l.trim();
+  if(/^(-{3,}|\*{3,}|_{3,})$/.test(t))return "--------------------";
+  let m;if(m=t.match(/^(#{1,3})\s+(.*)$/))return (m[1].length<3?"\n":"")+m[2].replace(/\*\*|__/g,"").toUpperCase();
+  return l.replace(/\*\*(.+?)\*\*/g,"$1").replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g,"$1$2").replace(/^(\s*)[*•]\s+/,"$1- ");
+ }).join("\n").replace(/\n{3,}/g,"\n\n").trim()+"\n";
+}
+async function pCopy(prompt,what){
+ if(PDL){dlTxt("prompt-"+what+".txt",prompt);return}
+ if(await mCopy(prompt)){toast("Prompt "+what+" tersalin. Tempel ke chat AI.",1);return}
+ const w=$("#pprompt-wrap"),ta=$("#pprompt");if(w&&ta){w.style.display="";ta.value=prompt;ta.focus();ta.select()}
+ toast("Gagal menyalin otomatis. Salin dari kotak yang muncul.");
+}
+function pParse(){
+ const t=($("#ppaste")||{}).value||"";if(!t.trim())throw new Error("Tempel dulu hasil dari chat AI.");
+ try{return mParse(t)}catch{throw new Error("Hasil bukan JSON yang valid. Pastikan seluruh balasan tertempel sampai tanda } terakhir, lalu coba lagi.")}
+}
+async function manualAnaPrompt(id){
+ const sn=chk(await sb.from("snapshots").select("*").eq("id",id).single()).data;
+ const ep=chk(await sb.from("episodes").select("*").eq("id",sn.episode_id).single()).data;
+ let sv=chk(await sb.from("script_versions").select("content").eq("episode_id",sn.episode_id).eq("approved",true).order("version",{ascending:false}).limit(1)).data;
+ if(!sv||!sv.length)sv=chk(await sb.from("script_versions").select("content").eq("episode_id",sn.episode_id).eq("status","selesai").order("version",{ascending:false}).limit(1)).data;
+ const sc=(sv&&sv[0]&&sv[0].content)||{};
+ const br=chk(await sb.from("brand_profiles").select("data").eq("project_id",sn.project_id).limit(1)).data;
+ const others=chk(await sb.from("snapshots").select("episode_id,metrics").eq("project_id",sn.project_id).eq("period",sn.period).neq("id",id).order("measured_at",{ascending:false}).limit(8)).data||[];
+ const eps=chk(await sb.from("episodes").select("id,number,title")).data||[];
+ const titles=Object.fromEntries(eps.map(e=>[e.id,"EP"+e.number+" "+e.title]));
+ return `${A_RULES}
+
+BRAND DNA:
+${JSON.stringify(mClean(br&&br[0]&&br[0].data))}
+
+EPISODE:
+${JSON.stringify(mClean(ep))}
+
+SCRIPT EPISODE (versi disetujui jika ada):
+${JSON.stringify({script:sc.script,publikasi:sc.paket_publikasi})}
+
+DATA PERFORMA YANG DIMASUKKAN PENGGUNA (periode: ${sn.period}, diambil: ${sn.measured_at}, sumber: ${sn.source}):
+${JSON.stringify(mReadable(sn.metrics))}
+Catatan pengguna: ${sn.notes||"-"}
+
+VIDEO LAIN DENGAN PERIODE UKUR YANG SAMA (untuk perbandingan; kosong jika belum ada):
+${JSON.stringify(others.map(o=>({episode:titles[o.episode_id],data:mReadable(o.metrics)})))}`;
+}
+{const _ra=runAnalysis;runAnalysis=async function(id){
+ const m=$("#manualana");
+ if(m&&m.checked){chk(await sb.from("snapshots").update({analysis_status:"gagal",analysis_error:"MANUAL",analysis_started:now()}).eq("id",id));return}
+ return _ra(id);
+}}
+{const _s=pushed.snapnew;pushed.snapnew=async function(s){const r=await _s.call(pushed,s);
+ r.body+=`<div class="gt">Pakai chat AI lain (tanpa server)</div><div class="grp">
+ <div class="c tap" data-act="xcopy"><span>1. Salin prompt baca gambar<small class="sub" style="white-space:normal">Tempel ke chat AI lain bersama screenshot Insights.</small></span></div>
+ <label class="f"><span>2. Tempel hasil JSON dari chat AI</span><textarea id="xpaste" rows="5" placeholder='{"views":3400,"reach":2500,...}'></textarea></label>
+ <div class="c tap" data-act="xfill"><span style="color:var(--tintd);font-weight:600">3. Isi form dari hasil</span></div>
+ <label class="c tap"><span>Analisis juga lewat chat AI lain<small class="sub" style="white-space:normal">Saat Simpan, lewati AI server. Prompt analisis muncul di halaman hasil.</small></span><input type="checkbox" id="manualana" checked style="width:22px;height:22px;accent-color:#25d366"></label></div>`;
+ return r}}
+{const _v=pushed.snapview;pushed.snapview=async function(s){const r=await _v.call(pushed,s);
+ const mk='Analisis gagal.<br><span class="red">MANUAL</span>';
+ if(r.body.includes(mk))r.body=r.body.replace(mk,'Belum dianalisis.<br><span class="sub">Pakai chat AI lain di bawah, atau tekan Coba lagi untuk AI server.</span>');
+ if(!r.body.includes("AI sedang menganalisis"))r.body+=`<div class="gt">Analisis lewat chat AI lain</div><div class="grp">
+ <div class="c tap" data-act="acopy" data-id="${s.id}"><span>1. Salin prompt analisis<small class="sub" style="white-space:normal">Berisi Brand DNA, script, dan metrik episode ini. Tempel ke chat AI lain.</small></span></div>
+ <label class="f" id="aprompt-wrap" style="display:none"><span>Salin manual dari kotak ini</span><textarea id="aprompt" rows="4" readonly></textarea></label>
+ <label class="f"><span>2. Tempel hasil JSON dari chat AI</span><textarea id="apaste" rows="6"></textarea></label>
+ <div class="c tap" data-act="asave" data-id="${s.id}"><span style="color:var(--tintd);font-weight:600">3. Simpan hasil analisis</span></div></div>`;
+ return r}}
+Object.assign(A,{
+ async xcopy(){toast(await mCopy(X_PROMPT)?"Prompt tersalin. Tempel ke chat AI bersama screenshot.":"Gagal menyalin. Izinkan akses clipboard di browser.",1)},
+ async xfill(){
+  const f=$("#f"),t=($("#xpaste")||{}).value||"";if(!f)return;
+  if(!t.trim())throw new Error("Tempel dulu hasil dari chat AI.");
+  let r;try{r=mParse(t)}catch{throw new Error("Hasil bukan JSON yang valid. Minta chat AI membalas JSON saja.")}
+  fillSnap(f,r);
+ },
+ async acopy(b){
+  const p=await manualAnaPrompt(b.dataset.id);
+  if(await mCopy(p)){toast("Prompt analisis tersalin. Tempel ke chat AI.",1);return}
+  const w=$("#aprompt-wrap"),ta=$("#aprompt");if(w&&ta){w.style.display="";ta.value=p;ta.focus();ta.select()}
+  toast("Gagal menyalin otomatis. Salin dari kotak yang muncul.");
+ },
+ async asave(b){
+  const t=($("#apaste")||{}).value||"";if(!t.trim())throw new Error("Tempel dulu hasil dari chat AI.");
+  let c;try{c=mParse(t)}catch{throw new Error("Hasil bukan JSON yang valid. Minta chat AI membalas JSON saja.")}
+  if(!c||typeof c!=="object"||(!c.ringkasan&&!c.perlu_diperbaiki))throw new Error("JSON tidak berisi analisis. Pastikan memakai prompt dari aplikasi.");
+  const id=b.dataset.id,sn=chk(await sb.from("snapshots").select("project_id,episode_id").eq("id",id).single()).data;
+  chk(await sb.from("insights").delete().eq("snapshot_id",id));
+  const ins=(Array.isArray(c.insights)?c.insights:[]).slice(0,5).filter(i=>i&&i.teks).map(i=>({project_id:sn.project_id,episode_id:sn.episode_id,snapshot_id:id,teks:String(i.teks),rekomendasi:i.rekomendasi?String(i.rekomendasi):null,keyakinan:["rendah","sedang","tinggi"].includes(i.keyakinan)?i.keyakinan:"rendah",status:"hipotesis"}));
+  if(ins.length)chk(await sb.from("insights").insert(ins));
+  const {insights,...analysis}=c;
+  chk(await sb.from("snapshots").update({analysis_status:"selesai",analysis_error:null,analysis:{...analysis,model:"manual:chat AI lain"}}).eq("id",id));
+  toast("Analisis tersimpan",1);render();
+ }
+});
+if(typeof INSTANT!=="undefined")["xcopy","xfill"].forEach(k=>INSTANT.add(k));
+
+Object.assign(A,{
+ async pcopyideas(){
+  const f=$("form[data-form=newdraft]"),ids=[...f.querySelectorAll("input[name=ch]:checked")].map(x=>x.value);
+  if(!ids.length)throw new Error("Pilih minimal satu tokoh.");
+  await pCopy(await manualDraftPrompt("ideas",{ids,note:(f.elements.note.value||"").trim()||null}),"ide");
+ },
+ async psaveideas(){
+  const f=$("form[data-form=newdraft]"),ids=[...f.querySelectorAll("input[name=ch]:checked")].map(x=>x.value);
+  if(!ids.length)throw new Error("Pilih minimal satu tokoh.");
+  const c=pParse();if(!c||!Array.isArray(c.ideas)||!c.ideas.length)throw new Error("JSON tidak berisi ide. Pakai prompt dari aplikasi ini.");
+  const row=chk(await sb.from("drafts").insert({project_id:pid,character_ids:ids,params:{note:(f.elements.note.value||"").trim()||null},status:"ide_siap",ideas:c.ideas.slice(0,3),chosen:null}).select("id").single()).data;
+  epv="draf";toast("Ide tersimpan",1);stack[stack.length-1]={t:"draft",id:row.id};render(1);
+ },
+ async pcopyscript(b){
+  const d=chk(await sb.from("drafts").select("*").eq("id",b.dataset.id).single()).data,f=$("form[data-form=idea]");
+  const ed=f?collect(f,["judul","premis","tema","konflik","hook","alur","rangkaian_adegan","ending","hubungan_episode_lalu"].map(k=>[k])):{};
+  await pCopy(await manualDraftPrompt("script",{ids:d.character_ids,note:d.params?.note,chosen:{...d.chosen,...ed}}),"script");
+ },
+ async pcopyrev(b){
+  const d=chk(await sb.from("drafts").select("*").eq("id",b.dataset.id).single()).data,f=$("form[data-form=rev]"),ins=f?(f.elements.ins.value||"").trim():"";
+  if(!ins)throw new Error("Tulis perintah revisi dulu di kolom Chat revisi.");
+  await pCopy(await manualDraftPrompt("revise",{ids:d.character_ids,note:d.params?.note,chosen:d.chosen,script:d.script,instruction:ins}),"revisi");
+ },
+ async pcopyregen(b){
+  const d=chk(await sb.from("drafts").select("*").eq("id",b.dataset.id).single()).data;
+  await pCopy(await manualDraftPrompt("script",{ids:d.character_ids,note:d.params?.note,chosen:d.chosen}),"script");
+ },
+ async psavescript(b){
+  const c=pParse();if(!c||typeof c!=="object"||!c.script)throw new Error("JSON tidak berisi script. Pakai prompt dari aplikasi ini.");
+  const id=b.dataset.id,d=chk(await sb.from("drafts").select("script,history,instruction,chosen").eq("id",id).single()).data;
+  const f=$("form[data-form=idea]"),ed=f?collect(f,["judul","premis","tema","konflik","hook","alur","rangkaian_adegan","ending","hubungan_episode_lalu"].map(k=>[k])):null;
+  const history=d.script?[...(d.history||[]),{script:d.script,instruksi:d.instruction,at:new Date().toISOString()}]:d.history||[];
+  chk(await sb.from("drafts").update({status:"script_siap",error:null,history,...(ed?{chosen:{...d.chosen,...ed}}:{}),script:{script:c.script,arahan_teknis:c.arahan_teknis,paket_publikasi:c.paket_publikasi,asumsi:c.asumsi,model:"manual:chat AI lain"},updated_at:now()}).eq("id",id));
+  toast("Script tersimpan",1);render();window.scrollTo(0,0);
+ }
+});
+Object.assign(A,{
+ ...Object.fromEntries(["ideas","script","rev","regen"].map(k=>["pdl"+k,async b=>{PDL=1;try{await A["pcopy"+k](b)}finally{PDL=0}}])),
+ async dltxt(){
+  const o=$("#out");if(!o)return;const raw=o.dataset.raw||"";
+  const t=(raw.match(/^#\s+(.+)$/m)||[])[1]||"naskah";
+  dlTxt(slug(t)+"-"+(vtab||"script")+".txt",plainTxt(raw));
+ }
+});
 async function start(){
   let session=null;
   try{session=(await Promise.race([sb.auth.getSession(),new Promise((_,r)=>setTimeout(()=>r(new Error("Koneksi ke Supabase lambat atau terblokir.")),6000))])).data.session}
