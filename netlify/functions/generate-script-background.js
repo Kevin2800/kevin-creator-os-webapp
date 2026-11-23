@@ -4,6 +4,8 @@ const KEY = "sb_publishable_evtnCN1u9KHLVIa2Bh5dsg_v9TLsWvx"; // kunci publik by
 
 const clean = (o) => Object.fromEntries(Object.entries(o || {}).filter(([k, v]) => v && !["id", "project_id", "created_at", "updated_at"].includes(k)));
 
+const { FILM_OUT } = require("../lib/film-prompt.js");
+
 const RULES = `Kamu adalah penulis naskah dan sutradara serial Instagram Reels (vertikal 9:16) berbahasa Indonesia untuk akun @kevin_k.w.
 Aturan:
 - Pakai HANYA data di bawah. Jangan mengarang karakter, fakta, atau episode. Jika informasi penting tidak ada, tulis "belum ditentukan" dan catat di "asumsi".
@@ -12,12 +14,7 @@ Aturan:
 - Hook harus dibayar oleh isi cerita (bukan clickbait). Tidak semua episode harus cliffhanger.
 - Produksi realistis (smartphone, tripod, mikrofon, lampu sederhana sesuai peralatan yang tersedia); beri alternatif bila alat terbatas. Musik hanya yang berlisensi atau bebas royalti.
 - Jangan menyalin karya kreator lain.
-Keluarkan JSON dengan 4 kunci bertipe string:
-"script": ringkasan produksi singkat (logline, durasi, karakter, lokasi), struktur (hook, konflik, setup, eskalasi, payoff, ending), lalu dialog lengkap. Tiap adegan memakai baris berlabel: TIMESTAMP, LOKASI, SHOT, AKSI, KARAKTER, DIALOG, EKSPRESI, PAUSE, AUDIO, CATATAN SUTRADARA.
-"arahan_teknis": shot list (nomor, timestamp, ukuran shot, sudut, posisi dan gerak kamera, blocking, durasi, pencahayaan, audio, transisi), frame rate dan shutter speed, exposure dan white balance, penempatan kamera, arah cahaya, komposisi 9:16, alternatif shot, dan rencana editing (ritme, subtitle, sound design, color grading, frame pembuka dan penutup).
-"paket_publikasi": 3 alternatif judul atau opening text, caption, CTA natural, teks cover, kata kunci, hashtag seperlunya, komentar yang natural untuk dipancing (bukan engagement bait), hipotesis performa yang diuji.
-"asumsi": daftar asumsi dan hal yang belum ditentukan, satu per baris.
-Gunakan teks biasa tanpa tanda markdown.`;
+${FILM_OUT}`;
 
 const { generate, parseJSON } = require("../lib/ai.js");
 
@@ -39,7 +36,7 @@ exports.handler = async (event) => {
     const chars = await rest(`characters?project_id=eq.${v.project_id}&status=eq.aktif&select=*`);
     const prev = await rest(`episodes?project_id=eq.${v.project_id}&number=lt.${ep.number}&order=number.desc&limit=5&select=number,title,summary,main_conflict,key_events,new_info,relationship_changes,unpaid_promises,cliffhanger`);
     const [st] = await rest(`ai_provider_settings?project_id=eq.${v.project_id}&select=*`);
-    const maxTokens = Math.max(st?.max_output_tokens || 0, 8192);
+    const maxTokens = Math.max(st?.max_output_tokens || 0, 12000);
     const prompt = `${RULES}
 
 DATA BRAND DNA (kosong berarti belum ditentukan):
